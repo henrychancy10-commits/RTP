@@ -1,0 +1,20 @@
+{
+  "name": "rtp-email-generator",
+  "version": "1.0.0",
+  "description": "AI-powered email generation from URLs using Claude, with Outlook integration",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "setup": "node setup.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@azure/msal-node": "^2.16.0",
+    "cheerio": "^1.0.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.7",
+    "node-fetch": "^3.3.2",
+    "open": "^10.1.0"
+  }
+}
