@@ -6,7 +6,7 @@ Generate professional emails from any URL using Claude AI and push them to your 
 
 1. You provide a URL and recipient info
 2. The tool scrapes the page content
-3. Claude generates a polished email based on the content
+3. Claude generates a polished email using **your custom prompt** (from `prompt.txt`)
 4. The email is created as a draft in your Outlook (or sent immediately)
 
 ## Quick Start
@@ -14,6 +14,9 @@ Generate professional emails from any URL using Claude AI and push them to your 
 ```bash
 npm install
 node setup.js          # Interactive .env configuration
+
+# Paste your Claude Project prompt into prompt.txt (see below)
+
 node index.js --url "https://example.com/article" \
               --to "recipient@company.com" \
               --subject "Thought you'd find this interesting"
@@ -72,13 +75,14 @@ node index.js -u "https://example.com" -t "alice@corp.com,bob@corp.com" -s "FYI"
 | `--send` | Send immediately instead of creating a draft |
 | `--preview` | Print generated HTML without sending |
 | `--model <model>` | Claude model (default: `claude-sonnet-4-20250514`) |
-| `--system-prompt <prompt>` | Override the built-in system prompt |
+| `--prompt-file <path>` | Path to a custom prompt file (default: `prompt.txt`) |
 
 ## Project Structure
 
 ```
 ├── index.js              # CLI entry point
 ├── setup.js              # Interactive .env setup helper
+├── prompt.txt            # YOUR Claude Project prompt goes here
 ├── src/
 │   ├── fetch-url.js      # URL content extraction
 │   ├── generate-email.js # Claude email generation
@@ -87,8 +91,27 @@ node index.js -u "https://example.com" -t "alice@corp.com,bob@corp.com" -s "FYI"
 └── package.json
 ```
 
-## Customizing the Prompt
+## Using Your Claude Project Prompt
 
-The built-in system prompt tells Claude to write professional, concise emails in HTML format. You can override it per-invocation with `--system-prompt`, or edit the `DEFAULT_SYSTEM_PROMPT` in `src/generate-email.js` to change the default behavior globally.
+The tool is designed to use the **same prompt you already have in your Claude Project**. Here's how to set it up:
 
-If you already have a prompt you use in a Claude Project, copy it into either of those locations.
+1. Open your Claude Project at [claude.ai](https://claude.ai)
+2. Click the project name → **Project instructions**
+3. Copy the full prompt text
+4. Paste it into **`prompt.txt`** in the project root (replace the placeholder text)
+
+The tool will automatically use `prompt.txt` as the system prompt every time you run it. The URL content gets injected as the user message, just like pasting a URL into your Claude Project conversation.
+
+**Important:** Make sure your prompt includes a line telling Claude to output HTML, so the email renders correctly in Outlook. If it doesn't, add this to the end:
+
+```
+Output the email body as clean HTML using <p>, <ul>, <li>, <strong>, <em>, <br> tags only. Do not wrap the output in code fences.
+```
+
+You can also use a different prompt file per-run:
+
+```bash
+node index.js -u "..." -t "..." -s "..." --prompt-file ./prompts/follow-up.txt
+```
+
+If `prompt.txt` is missing or empty, a sensible built-in fallback prompt is used.

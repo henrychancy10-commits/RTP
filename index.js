@@ -19,7 +19,7 @@ program
   .option("--send", "Send immediately instead of creating a draft", false)
   .option("--preview", "Preview the generated email without sending", false)
   .option("--model <model>", "Claude model to use")
-  .option("--system-prompt <prompt>", "Override the default system prompt")
+  .option("--prompt-file <path>", "Path to your custom prompt file (default: prompt.txt)")
   .action(run);
 
 program.parse();
@@ -37,7 +37,7 @@ async function run(opts) {
     const emailHtml = await generateEmail(urlContent, {
       instructions: opts.instructions,
       model: opts.model,
-      systemPrompt: opts.systemPrompt,
+      promptFile: opts.promptFile,
     });
     console.log("Email generated.\n");
 

@@ -1,0 +1,19 @@
+Paste your Claude Project prompt here.
+
+This file is used as the system prompt when generating emails. Replace everything
+in this file with the exact prompt from your Claude Project.
+
+To find your project prompt:
+1. Open your Claude Project at https://claude.ai
+2. Click the project name → "Project instructions"
+3. Copy the full prompt text
+4. Paste it here, replacing all of this placeholder text
+
+The tool will automatically use this prompt every time you generate an email.
+If this file is empty or missing, a built-in fallback prompt will be used instead.
+
+IMPORTANT: Make sure your prompt includes instructions to output the email as HTML
+(using tags like <p>, <ul>, <strong>, etc.) so it renders correctly in Outlook.
+Add this line to the end of your project prompt if it doesn't already mention HTML:
+
+  "Output the email body as clean HTML using <p>, <ul>, <li>, <strong>, <em>, <br> tags only. Do not wrap the output in code fences."
