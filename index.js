@@ -11,11 +11,14 @@ import {
 
 program
   .name("rtp")
-  .description("Generate emails from URLs using Claude AI and send via Outlook")
-  .requiredOption("-u, --url <url>", "URL to generate the email from")
+  .description("Generate thesis-driven outreach emails from URLs using Claude AI and send via Outlook")
+  .requiredOption("-u, --url <url>", "Company URL to research and generate the email from")
   .requiredOption("-t, --to <email>", "Recipient email address(es), comma-separated")
   .requiredOption("-s, --subject <subject>", "Email subject line")
-  .option("-i, --instructions <text>", "Additional instructions for email generation")
+  .requiredOption("-n, --name <name>", "Recipient name (e.g. 'John' or 'John and Sarah')")
+  .option("-c, --competitors <names>", "Known competitors, comma-separated (otherwise Claude will research)")
+  .option("-p, --portfolio <text>", "Relevant portfolio company to mention and why")
+  .option("--context <text>", "Additional context (intro source, personal connection, specific angle)")
   .option("--send", "Send immediately instead of creating a draft", false)
   .option("--preview", "Preview the generated email without sending", false)
   .option("--model <model>", "Claude model to use")
@@ -35,7 +38,10 @@ async function run(opts) {
     // 2. Generate email via Claude
     console.log("Generating email with Claude...");
     const emailHtml = await generateEmail(urlContent, {
-      instructions: opts.instructions,
+      recipientName: opts.name,
+      competitors: opts.competitors,
+      portfolio: opts.portfolio,
+      context: opts.context,
       model: opts.model,
       promptFile: opts.promptFile,
     });

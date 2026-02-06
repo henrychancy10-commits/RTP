@@ -42,14 +42,20 @@ export function loadSystemPrompt(promptFile) {
  *
  * @param {object} urlContent - Output from fetchUrlContent()
  * @param {object} options
- * @param {string} [options.instructions] - Additional user instructions for tone/content
+ * @param {string} options.recipientName - Recipient name(s) for the greeting
+ * @param {string} [options.competitors] - Known competitors, comma-separated
+ * @param {string} [options.portfolio] - Relevant portfolio company info
+ * @param {string} [options.context] - Additional context (intro source, connection, angle)
  * @param {string} [options.model] - Claude model to use
  * @param {string} [options.promptFile] - Path to a file containing the system prompt
  * @returns {Promise<string>} Generated email HTML body
  */
 export async function generateEmail(urlContent, options = {}) {
   const {
-    instructions = "",
+    recipientName = "",
+    competitors = "",
+    portfolio = "",
+    context = "",
     model = process.env.CLAUDE_MODEL || "claude-sonnet-4-20250514",
     promptFile,
   } = options;
@@ -59,7 +65,7 @@ export async function generateEmail(urlContent, options = {}) {
 
   const client = new Anthropic();
 
-  const userMessage = buildUserMessage(urlContent, instructions);
+  const userMessage = buildUserMessage(urlContent, { recipientName, competitors, portfolio, context });
 
   const response = await client.messages.create({
     model,
@@ -76,15 +82,30 @@ export async function generateEmail(urlContent, options = {}) {
   return text.trim();
 }
 
-function buildUserMessage(urlContent, instructions) {
-  let msg = `Please write an email based on the following webpage content.\n\n`;
-  msg += `**Source URL:** ${urlContent.url}\n`;
-  if (urlContent.title) msg += `**Page Title:** ${urlContent.title}\n`;
-  if (urlContent.description) msg += `**Description:** ${urlContent.description}\n`;
-  msg += `\n**Page Content:**\n${urlContent.body}\n`;
+function buildUserMessage(urlContent, { recipientName, competitors, portfolio, context }) {
+  // The prompt says "All I will put into the chat will be the URL" — so we lead with
+  // the URL and append the scraped content plus any optional inputs.
+  let msg = `${urlContent.url}\n`;
 
-  if (instructions) {
-    msg += `\n**Additional Instructions:** ${instructions}\n`;
+  msg += `\nRecipient name: ${recipientName}\n`;
+
+  // Append scraped page content so Claude doesn't need web access
+  msg += `\n--- Scraped page content ---\n`;
+  if (urlContent.title) msg += `Page title: ${urlContent.title}\n`;
+  if (urlContent.description) msg += `Meta description: ${urlContent.description}\n`;
+  msg += `\n${urlContent.body}\n`;
+  msg += `--- End scraped content ---\n`;
+
+  if (competitors) {
+    msg += `\nKnown competitors: ${competitors}\n`;
+  }
+
+  if (portfolio) {
+    msg += `\nRelevant portfolio company: ${portfolio}\n`;
+  }
+
+  if (context) {
+    msg += `\nAdditional context: ${context}\n`;
   }
 
   return msg;
