@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
+    "start": "node server.js",
+    "cli": "node index.js",
     "setup": "node setup.js"
   },
   "dependencies": {
@@ -14,6 +15,7 @@
     "cheerio": "^1.0.0",
     "commander": "^12.1.0",
     "dotenv": "^16.4.7",
+    "express": "^4.21.0",
     "node-fetch": "^3.3.2",
     "open": "^10.1.0"
   }

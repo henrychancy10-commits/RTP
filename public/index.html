@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RTP Email Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>RTP Email Generator</h1>
+      <p class="subtitle">Generate thesis-driven outreach emails from any URL</p>
+    </header>
+
+    <form id="emailForm">
+      <div class="form-section">
+        <h2>Required</h2>
+
+        <div class="form-group">
+          <label for="url">Company URL</label>
+          <input type="url" id="url" placeholder="https://company.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="name">Recipient Name</label>
+          <input type="text" id="name" placeholder="John" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="to">Recipient Email</label>
+            <input type="email" id="to" placeholder="john@company.com" required>
+          </div>
+          <div class="form-group">
+            <label for="subject">Subject Line</label>
+            <input type="text" id="subject" placeholder="Resurgens + CompanyName" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2>Optional</h2>
+
+        <div class="form-group">
+          <label for="competitors">Known Competitors <span class="hint">comma-separated (leave blank and Claude will research them)</span></label>
+          <input type="text" id="competitors" placeholder="CompetitorA, CompetitorB, CompetitorC">
+        </div>
+
+        <div class="form-group">
+          <label for="portfolio">Relevant Portfolio Company <span class="hint">name + why it's relevant</span></label>
+          <input type="text" id="portfolio" placeholder="EnergyCAP — similar compliance-heavy customer dynamics">
+        </div>
+
+        <div class="form-group">
+          <label for="context">Additional Context <span class="hint">intro source, personal connection, specific angle</span></label>
+          <textarea id="context" rows="2" placeholder="Met briefly at SaaStr, mentioned they're exploring growth capital"></textarea>
+        </div>
+      </div>
+
+      <button type="submit" id="generateBtn" class="btn btn-primary">
+        <span class="btn-text">Generate Email</span>
+        <span class="btn-loading" style="display:none;">Generating...</span>
+      </button>
+    </form>
+
+    <div id="result" class="result-section" style="display:none;">
+      <h2>Generated Email</h2>
+
+      <div id="emailPreview" class="email-preview"></div>
+
+      <div class="action-buttons">
+        <button id="draftBtn" class="btn btn-secondary">Save as Outlook Draft</button>
+        <button id="sendBtn" class="btn btn-danger">Send Now</button>
+        <button id="copyBtn" class="btn btn-outline">Copy HTML</button>
+        <button id="regenerateBtn" class="btn btn-outline">Regenerate</button>
+      </div>
+
+      <div id="statusMessage" class="status-message" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
