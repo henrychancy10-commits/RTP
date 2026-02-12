@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Interactive setup helper — walks you through creating the .env file
- * with the required API keys and Microsoft app registration.
+ * with the required API keys.
  */
 import fs from "fs";
 import readline from "readline";
@@ -21,24 +21,38 @@ async function main() {
     }
   }
 
-  console.log("You'll need two things:\n");
+  console.log("You'll need:\n");
   console.log("1. A Claude API key from https://console.anthropic.com/");
-  console.log("2. A Microsoft Entra app registration (see README.md for steps)\n");
+  console.log("2. Google Cloud credentials for Gmail (see README.md)\n");
 
   const anthropicKey = await ask("Anthropic API key: ");
-  const clientId = await ask("Microsoft Client ID: ");
-  const tenantId = await ask("Microsoft Tenant ID (or 'common' for multi-tenant): ");
 
-  const env = [
+  console.log("\n--- Gmail Setup ---");
+  console.log("Get these from https://console.cloud.google.com > APIs & Services > Credentials\n");
+  const googleClientId = await ask("Google Client ID: ");
+  const googleClientSecret = await ask("Google Client Secret: ");
+
+  console.log("\n--- Outlook (optional, press Enter to skip) ---");
+  const msClientId = await ask("Microsoft Client ID (or Enter to skip): ");
+  const msTenantId = msClientId ? await ask("Microsoft Tenant ID: ") : "";
+
+  const lines = [
     `ANTHROPIC_API_KEY=${anthropicKey}`,
-    `MICROSOFT_CLIENT_ID=${clientId}`,
-    `MICROSOFT_TENANT_ID=${tenantId || "common"}`,
-    "",
-  ].join("\n");
+    `GOOGLE_CLIENT_ID=${googleClientId}`,
+    `GOOGLE_CLIENT_SECRET=${googleClientSecret}`,
+  ];
 
-  fs.writeFileSync(".env", env, "utf-8");
-  console.log("\n.env file created. You're ready to go!");
-  console.log("Run:  node index.js --url <url> --to <email> --subject <subject>");
+  if (msClientId) {
+    lines.push(`MICROSOFT_CLIENT_ID=${msClientId}`);
+    lines.push(`MICROSOFT_TENANT_ID=${msTenantId || "common"}`);
+  }
+
+  lines.push("");
+
+  fs.writeFileSync(".env", lines.join("\n"), "utf-8");
+  console.log("\n.env file created!");
+  console.log("Run:  npm start");
+  console.log("Then open:  http://localhost:3000");
   rl.close();
 }
 

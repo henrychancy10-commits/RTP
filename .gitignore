@@ -1,3 +1,5 @@
 node_modules/
 .env
+.gmail-token.json
+.token-cache.json
 *.log

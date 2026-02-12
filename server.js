@@ -10,6 +10,13 @@ import {
   createOutlookDraft,
   sendOutlookEmail,
 } from "./src/outlook.js";
+import {
+  getAuthUrl,
+  handleAuthCallback,
+  isAuthenticated,
+  createGmailDraft,
+  sendGmail,
+} from "./src/gmail.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -48,8 +55,69 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
+// --- Gmail routes ---
+
+// Check if Gmail is connected
+app.get("/api/gmail/status", (req, res) => {
+  res.json({ connected: isAuthenticated() });
+});
+
+// Start Gmail OAuth flow
+app.get("/auth/google", (req, res) => {
+  const url = getAuthUrl();
+  res.redirect(url);
+});
+
+// Gmail OAuth callback
+app.get("/auth/google/callback", async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) {
+      return res.status(400).send("Missing authorization code.");
+    }
+    await handleAuthCallback(code);
+    res.redirect("/?gmail=connected");
+  } catch (err) {
+    res.status(500).send(`Gmail auth failed: ${err.message}`);
+  }
+});
+
+// Create draft in Gmail
+app.post("/api/gmail/draft", async (req, res) => {
+  try {
+    const { to, subject, emailHtml } = req.body;
+
+    if (!to || !subject || !emailHtml) {
+      return res.status(400).json({ error: "Recipient, subject, and email body are required." });
+    }
+
+    const draft = await createGmailDraft({ to, subject, htmlBody: emailHtml });
+    res.json({ success: true, draftId: draft.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Send email via Gmail
+app.post("/api/gmail/send", async (req, res) => {
+  try {
+    const { to, subject, emailHtml } = req.body;
+
+    if (!to || !subject || !emailHtml) {
+      return res.status(400).json({ error: "Recipient, subject, and email body are required." });
+    }
+
+    await sendGmail({ to, subject, htmlBody: emailHtml });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- Outlook routes ---
+
 // Create draft in Outlook
-app.post("/api/draft", async (req, res) => {
+app.post("/api/outlook/draft", async (req, res) => {
   try {
     const { to, subject, emailHtml } = req.body;
 
@@ -72,7 +140,7 @@ app.post("/api/draft", async (req, res) => {
 });
 
 // Send email via Outlook
-app.post("/api/send", async (req, res) => {
+app.post("/api/outlook/send", async (req, res) => {
   try {
     const { to, subject, emailHtml } = req.body;
 

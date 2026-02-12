@@ -13,6 +13,19 @@
       <p class="subtitle">Generate thesis-driven outreach emails from any URL</p>
     </header>
 
+    <!-- Email Provider Selection -->
+    <div class="form-section provider-section">
+      <h2>Email Provider</h2>
+      <div class="provider-toggle">
+        <button type="button" class="provider-btn active" data-provider="gmail">Gmail</button>
+        <button type="button" class="provider-btn" data-provider="outlook">Outlook</button>
+      </div>
+      <div id="gmailStatus" class="provider-status">
+        <span id="gmailStatusText">Checking Gmail connection...</span>
+        <a id="gmailConnectLink" href="/auth/google" class="btn btn-small btn-connect" style="display:none;">Connect Gmail</a>
+      </div>
+    </div>
+
     <form id="emailForm">
       <div class="form-section">
         <h2>Required</h2>
@@ -70,7 +83,7 @@
       <div id="emailPreview" class="email-preview"></div>
 
       <div class="action-buttons">
-        <button id="draftBtn" class="btn btn-secondary">Save as Outlook Draft</button>
+        <button id="draftBtn" class="btn btn-secondary">Save as Draft</button>
         <button id="sendBtn" class="btn btn-danger">Send Now</button>
         <button id="copyBtn" class="btn btn-outline">Copy HTML</button>
         <button id="regenerateBtn" class="btn btn-outline">Regenerate</button>

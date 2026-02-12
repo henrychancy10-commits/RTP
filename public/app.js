@@ -7,10 +7,52 @@ const sendBtn = document.getElementById("sendBtn");
 const copyBtn = document.getElementById("copyBtn");
 const regenerateBtn = document.getElementById("regenerateBtn");
 const statusMessage = document.getElementById("statusMessage");
+const gmailStatusText = document.getElementById("gmailStatusText");
+const gmailConnectLink = document.getElementById("gmailConnectLink");
+const gmailStatusDiv = document.getElementById("gmailStatus");
 
 let currentEmailHtml = "";
+let selectedProvider = "gmail";
 
-// Generate email
+// --- Provider toggle ---
+document.querySelectorAll(".provider-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".provider-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    selectedProvider = btn.dataset.provider;
+
+    // Show/hide Gmail status
+    gmailStatusDiv.style.display = selectedProvider === "gmail" ? "flex" : "none";
+  });
+});
+
+// --- Check Gmail connection on load ---
+async function checkGmailStatus() {
+  try {
+    const res = await fetch("/api/gmail/status");
+    const data = await res.json();
+    if (data.connected) {
+      gmailStatusText.textContent = "Gmail connected";
+      gmailStatusText.classList.add("connected");
+      gmailConnectLink.style.display = "none";
+    } else {
+      gmailStatusText.textContent = "Not connected";
+      gmailConnectLink.style.display = "inline-flex";
+    }
+  } catch {
+    gmailStatusText.textContent = "Could not check status";
+  }
+}
+
+checkGmailStatus();
+
+// Check if we just came back from Gmail auth
+if (window.location.search.includes("gmail=connected")) {
+  window.history.replaceState({}, "", "/");
+  checkGmailStatus();
+}
+
+// --- Generate email ---
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   await generateEmail();
@@ -61,7 +103,7 @@ async function generateEmail() {
   }
 }
 
-// Save as draft
+// --- Save as draft ---
 draftBtn.addEventListener("click", async () => {
   const to = document.getElementById("to").value;
   const subject = document.getElementById("subject").value;
@@ -71,11 +113,13 @@ draftBtn.addEventListener("click", async () => {
     return;
   }
 
+  const endpoint = selectedProvider === "gmail" ? "/api/gmail/draft" : "/api/outlook/draft";
+
   draftBtn.disabled = true;
   draftBtn.textContent = "Creating draft...";
 
   try {
-    const res = await fetch("/api/draft", {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ to, subject, emailHtml: currentEmailHtml }),
@@ -87,16 +131,17 @@ draftBtn.addEventListener("click", async () => {
       throw new Error(data.error || "Failed to create draft");
     }
 
-    showStatus("Draft created! Check your Outlook Drafts folder.", "success");
+    const providerName = selectedProvider === "gmail" ? "Gmail" : "Outlook";
+    showStatus(`Draft created! Check your ${providerName} Drafts folder.`, "success");
   } catch (err) {
     showStatus(err.message, "error");
   } finally {
     draftBtn.disabled = false;
-    draftBtn.textContent = "Save as Outlook Draft";
+    draftBtn.textContent = "Save as Draft";
   }
 });
 
-// Send immediately
+// --- Send immediately ---
 sendBtn.addEventListener("click", async () => {
   const to = document.getElementById("to").value;
   const subject = document.getElementById("subject").value;
@@ -110,11 +155,13 @@ sendBtn.addEventListener("click", async () => {
     return;
   }
 
+  const endpoint = selectedProvider === "gmail" ? "/api/gmail/send" : "/api/outlook/send";
+
   sendBtn.disabled = true;
   sendBtn.textContent = "Sending...";
 
   try {
-    const res = await fetch("/api/send", {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ to, subject, emailHtml: currentEmailHtml }),
@@ -135,7 +182,7 @@ sendBtn.addEventListener("click", async () => {
   }
 });
 
-// Copy HTML
+// --- Copy HTML ---
 copyBtn.addEventListener("click", () => {
   navigator.clipboard.writeText(currentEmailHtml).then(() => {
     showStatus("HTML copied to clipboard.", "info");

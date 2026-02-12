@@ -220,6 +220,63 @@ textarea {
   color: #0051a8;
 }
 
+.provider-toggle {
+  display: flex;
+  gap: 0;
+  background: #f5f5f7;
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 12px;
+}
+
+.provider-btn {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: #6e6e73;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.provider-btn.active {
+  background: #fff;
+  color: #1d1d1f;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.provider-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #6e6e73;
+}
+
+.provider-status .connected {
+  color: #1a7f37;
+}
+
+.btn-small {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.btn-connect {
+  background: #0071e3;
+  color: #fff;
+  text-decoration: none;
+}
+
+.btn-connect:hover {
+  background: #0077ed;
+}
+
 @media (max-width: 600px) {
   .form-row {
     grid-template-columns: 1fr;
