@@ -5,6 +5,11 @@ import * as cheerio from "cheerio";
  * Returns structured data: title, description, and body text.
  */
 export async function fetchUrlContent(url) {
+  // Auto-add https:// if missing
+  if (!/^https?:\/\//i.test(url)) {
+    url = "https://" + url;
+  }
+
   const response = await fetch(url, {
     headers: {
       "User-Agent":

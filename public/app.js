@@ -119,7 +119,7 @@ function renderTable() {
     <tr data-id="${row.id}">
       <td class="col-check"><input type="checkbox" class="row-check" ${row.selected ? "checked" : ""}></td>
       <td class="col-status"><span class="status-badge status-${row.status}">${formatStatus(row.status)}</span></td>
-      <td><input type="url" class="field-url" placeholder="https://company.com" value="${esc(row.url)}"></td>
+      <td><input type="text" class="field-url" placeholder="https://company.com" value="${esc(row.url)}"></td>
       <td><input type="text" class="field-name" placeholder="John" value="${esc(row.name)}"></td>
       <td><input type="email" class="field-to" placeholder="john@co.com" value="${esc(row.to)}"></td>
       <td><input type="text" class="field-subject" placeholder="Resurgens + Co" value="${esc(row.subject)}"></td>
