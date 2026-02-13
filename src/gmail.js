@@ -11,6 +11,12 @@ const SCOPES = [
   "https://www.googleapis.com/auth/gmail.send",
 ];
 
+function getRedirectUri() {
+  // Use APP_URL env var for cloud deployment, fall back to localhost
+  const baseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
+  return `${baseUrl}/auth/google/callback`;
+}
+
 function getOAuth2Client() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -21,7 +27,7 @@ function getOAuth2Client() {
     );
   }
 
-  return new google.auth.OAuth2(clientId, clientSecret, "http://localhost:3000/auth/google/callback");
+  return new google.auth.OAuth2(clientId, clientSecret, getRedirectUri());
 }
 
 /**
