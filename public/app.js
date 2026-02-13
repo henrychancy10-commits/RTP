@@ -182,6 +182,65 @@ selectAllCheckbox.addEventListener("change", () => {
   tableBody.querySelectorAll(".row-check").forEach((cb) => (cb.checked = selectAllCheckbox.checked));
 });
 
+// --- Excel-style paste ---
+// When pasting multi-cell data (tab-separated, newline-separated rows),
+// spread it across columns and rows starting from the focused cell.
+const FIELD_ORDER = ["url", "name", "to", "subject", "competitors", "portfolio", "context"];
+
+tableBody.addEventListener("paste", (e) => {
+  const target = e.target;
+  if (!target.matches("input")) return;
+
+  const clipboardText = (e.clipboardData || window.clipboardData).getData("text");
+  if (!clipboardText) return;
+
+  // Detect multi-cell paste: has tabs or multiple lines
+  const hasMultipleCells = clipboardText.includes("\t") || clipboardText.trim().includes("\n");
+  if (!hasMultipleCells) return; // Let normal single-value paste happen
+
+  e.preventDefault();
+  syncAllRows();
+
+  // Parse pasted data into rows of values
+  const pastedRows = clipboardText.trim().split("\n").map((line) => line.split("\t").map((v) => v.trim()));
+
+  // Find which row and column the user is pasting into
+  const tr = target.closest("tr");
+  const rowId = Number(tr.dataset.id);
+  const rowIndex = rows.findIndex((r) => r.id === rowId);
+
+  // Determine which column the cursor is in
+  const fieldClass = Array.from(target.classList).find((c) => c.startsWith("field-"));
+  const fieldName = fieldClass ? fieldClass.replace("field-", "") : "";
+  const colIndex = FIELD_ORDER.indexOf(fieldName);
+  if (colIndex === -1) return;
+
+  // Add more rows if needed
+  const extraRowsNeeded = (rowIndex + pastedRows.length) - rows.length;
+  if (extraRowsNeeded > 0) {
+    for (let i = 0; i < extraRowsNeeded; i++) {
+      rows.push(createRowData());
+    }
+  }
+
+  // Fill in the data
+  for (let r = 0; r < pastedRows.length; r++) {
+    const targetRow = rows[rowIndex + r];
+    if (!targetRow) break;
+
+    for (let c = 0; c < pastedRows[r].length; c++) {
+      const fieldIdx = colIndex + c;
+      if (fieldIdx >= FIELD_ORDER.length) break;
+
+      const field = FIELD_ORDER[fieldIdx];
+      targetRow[field] = pastedRows[r][c];
+    }
+  }
+
+  renderTable();
+  showStatus(`Pasted ${pastedRows.length} row(s) of data.`, "info");
+});
+
 // --- CSV ---
 downloadTemplateBtn.addEventListener("click", () => {
   const header = "url,name,to,subject,competitors,portfolio,context";
