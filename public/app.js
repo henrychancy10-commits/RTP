@@ -282,9 +282,13 @@ function downloadFile(filename, content, type) {
 generateAllBtn.addEventListener("click", async () => {
   syncAllRows();
 
+  console.log("All rows after sync:", rows.map(r => ({ id: r.id, url: r.url, name: r.name })));
+
   const toProcess = getSelectedOrAll().filter((r) => r.url && r.name && r.status !== "generating");
+  console.log("Rows to process:", toProcess.length);
+
   if (toProcess.length === 0) {
-    showStatus("No valid rows to process. Fill in at least URL and Name.", "error");
+    showStatus("No valid rows to process. Fill in at least URL and Recipient Name.", "error");
     return;
   }
 
@@ -543,5 +547,8 @@ function showStatus(message, type) {
   statusMessage.textContent = message;
   statusMessage.className = `status-message status-${type}`;
   statusMessage.style.display = "block";
-  setTimeout(() => { statusMessage.style.display = "none"; }, 5000);
+  // Only auto-hide success/info messages, keep errors visible
+  if (type !== "error") {
+    setTimeout(() => { statusMessage.style.display = "none"; }, 5000);
+  }
 }
