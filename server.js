@@ -51,6 +51,7 @@ app.post("/api/generate", async (req, res) => {
       contentLength: urlContent.body.length,
     });
   } catch (err) {
+    console.error("GENERATE ERROR:", err.message || err);
     res.status(500).json({ error: err.message });
   }
 });
