@@ -1,9 +1,12 @@
 {
   "name": "rtp-email-generator",
   "version": "1.0.0",
-  "description": "AI-powered email generation from URLs using Claude, with Outlook integration",
+  "description": "AI-powered email generation from URLs using Claude, with Gmail and Outlook integration",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.js",
     "cli": "node index.js",
@@ -17,7 +20,6 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.0",
     "googleapis": "^144.0.0",
-    "node-fetch": "^3.3.2",
     "open": "^10.1.0"
   }
 }
