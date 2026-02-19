@@ -526,12 +526,12 @@ async function copyRichText(rowId, btn) {
   const row = rows.find((r) => r.id === rowId);
   if (!row || !row.emailHtml) return;
 
-  // Wrap in email-safe HTML with Outlook-friendly styles
-  const wrappedHtml = `<html><body style="font-family:Calibri,Arial,sans-serif;font-size:14px;line-height:1.5;color:#333;">${row.emailHtml}</body></html>`;
+  // Process the HTML to add inline styles that Outlook respects on paste
+  const outlookHtml = prepareForOutlook(row.emailHtml);
 
   try {
     // Use Clipboard API to write both HTML and plain text
-    const htmlBlob = new Blob([wrappedHtml], { type: "text/html" });
+    const htmlBlob = new Blob([outlookHtml], { type: "text/html" });
     const textBlob = new Blob([htmlToPlainText(row.emailHtml)], { type: "text/plain" });
     await navigator.clipboard.write([
       new ClipboardItem({
@@ -554,6 +554,43 @@ async function copyRichText(rowId, btn) {
     await navigator.clipboard.writeText(text);
     showStatus("Copied as plain text (rich copy not supported in this browser).", "info");
   }
+}
+
+// Add inline styles to every element so Outlook preserves spacing on paste
+function prepareForOutlook(html) {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+
+  // Add inline margin to every <p> tag
+  div.querySelectorAll("p").forEach((p) => {
+    p.style.margin = "0 0 12px 0";
+    p.style.fontFamily = "Calibri, Arial, sans-serif";
+    p.style.fontSize = "14px";
+    p.style.lineHeight = "1.5";
+    p.style.color = "#333";
+  });
+
+  // Style <em> and <strong> so they survive paste
+  div.querySelectorAll("em").forEach((el) => {
+    el.style.fontStyle = "italic";
+  });
+  div.querySelectorAll("strong").forEach((el) => {
+    el.style.fontWeight = "bold";
+  });
+
+  // Style list items
+  div.querySelectorAll("ul, ol").forEach((el) => {
+    el.style.margin = "0 0 12px 0";
+    el.style.paddingLeft = "24px";
+    el.style.fontFamily = "Calibri, Arial, sans-serif";
+    el.style.fontSize = "14px";
+    el.style.color = "#333";
+  });
+  div.querySelectorAll("li").forEach((el) => {
+    el.style.marginBottom = "4px";
+  });
+
+  return `<html><head><style>p{margin:0 0 12px 0}body{font-family:Calibri,Arial,sans-serif;font-size:14px;line-height:1.5;color:#333}</style></head><body style="font-family:Calibri,Arial,sans-serif;font-size:14px;line-height:1.5;color:#333;">${div.innerHTML}</body></html>`;
 }
 
 // Convert HTML to readable plain text (fallback)
