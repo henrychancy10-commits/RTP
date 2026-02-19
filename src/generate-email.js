@@ -56,7 +56,7 @@ export async function generateEmail(urlContent, options = {}) {
     competitors = "",
     portfolio = "",
     context = "",
-    model = process.env.CLAUDE_MODEL || "claude-sonnet-4-20250514",
+    model = process.env.CLAUDE_MODEL || "claude-opus-4-6",
     promptFile,
   } = options;
 
