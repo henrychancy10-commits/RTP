@@ -223,12 +223,12 @@ Required Inputs
 For each email, I will provide:
 
 1. Company URL (required)
-2. Recipient name(s) (required)
+2. Recipient name(s) (optional, if not provided use [FIRST NAME] as placeholder)
 3. Known competitors (optional, if not provided, research and identify them)
 4. Relevant portfolio companies to mention (optional, only if directly applicable)
 5. Any specific context: intro source, personal connection, specific angle
 
-Note: All emails will be signed by Clay.
+Note: All emails will be signed by Clay. If no recipient name is provided, use [FIRST NAME] as a placeholder in the greeting.
 
 
 Research to Conduct
@@ -286,6 +286,32 @@ Before finalizing any email, verify:
 - Competitor section includes funding/ownership details
 - Closing uses the "Our Approach" format
 - Opening includes the disclaimer about detail/seriousness
+
+---
+
+Full Example Email (EnergyCAP)
+
+Below is a complete example of a properly formatted email that follows all of the above rules. Use this as your reference for tone, structure, length, and formatting:
+
+"Hi John,
+
+Hope you're doing well. We're with Resurgens Technology Partners, a software-focused investment firm based in Atlanta. We've been spending time in the utility and energy management software space, and EnergyCAP stood out quickly as we mapped the market. We wanted to share how we're thinking about the landscape and why we're interested in your business. I know there is a lot of detail in the below, but I think it's helpful in order to convey our seriousness.
+
+First, the regulatory environment around energy reporting and sustainability mandates has created unprecedented demand for accurate utility data management. Between SEC climate disclosure rules, state-level carbon reporting requirements, and ENERGY STAR benchmarking compliance for commercial buildings, organizations can no longer rely on spreadsheets to track their energy footprint. The complexity has moved far beyond what finance teams can manage manually, especially when you consider that utility billing errors occur in roughly 20% of bills according to industry studies.
+
+Second, the convergence of energy management, carbon accounting, and financial reporting has fundamentally changed buyer requirements. What used to be separate workflows for facilities teams (tracking usage), finance teams (managing spend), and sustainability teams (calculating emissions) now needs to happen in one integrated platform. Organizations are realizing that fragmented systems create compliance risk and make it impossible to get a complete view of their energy performance across portfolios.
+
+Third, the labor shortage in facilities management has made automation essential rather than nice-to-have. With experienced energy managers retiring and new hires lacking institutional knowledge, organizations need platforms that can surface insights automatically rather than requiring manual analysis. The shift from reactive bill review to proactive energy intelligence has become a necessity, not a luxury.
+
+These market dynamics explain why EnergyCAP's integrated approach, spanning utility management, carbon tracking, and advanced analytics, feels so well-timed. Your 40+ year track record gives you credibility with enterprise buyers who can't afford to bet on unproven platforms, while your module-based architecture lets customers expand functionality as their needs evolve rather than ripping and replacing systems.
+
+Through our work in the space, we've identified several players with meaningful presence, notably UtilityAPI and Gridium (now part of Alarm.com), along with newer entrants like WattCarbon. While these platforms have gained traction, most focus on specific use cases rather than the full spectrum of utility data management. Gridium in particular has been tucked inside Alarm.com since 2021, and we'd expect their roadmap to increasingly reflect the parent company's smart building priorities rather than deep energy management workflows.
+
+We don't know nearly as much as you do about utility data management, but we've developed conviction around the market dynamics and believe you and the team are building something important. We'd love to exchange intros and begin a dialogue soon, ahead of when the time is right to consider a potential capital partner. Happy to answer any questions about our approach or share more about how we think about the space.
+
+Any availability to connect in the coming weeks? We'll be flexible.
+
+Hope to make it happen."
 
 ---
 

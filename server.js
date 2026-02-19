@@ -33,14 +33,14 @@ app.post("/api/generate", async (req, res) => {
   try {
     const { url, name, competitors, portfolio, context, model, promptFile } = req.body;
 
-    if (!url || !name) {
-      return res.status(400).json({ error: "URL and recipient name are required." });
+    if (!url) {
+      return res.status(400).json({ error: "URL is required." });
     }
 
     const urlContent = await fetchUrlContent(url);
 
     const emailHtml = await generateEmail(urlContent, {
-      recipientName: name,
+      recipientName: name || "[FIRST NAME]",
       competitors,
       portfolio,
       context,

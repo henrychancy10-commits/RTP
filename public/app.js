@@ -348,11 +348,11 @@ generateAllBtn.addEventListener("click", async () => {
 
   console.log("All rows after sync:", rows.map(r => ({ id: r.id, url: r.url, name: r.name })));
 
-  const toProcess = getSelectedOrAll().filter((r) => r.url && r.name && r.status !== "generating");
+  const toProcess = getSelectedOrAll().filter((r) => r.url && r.status !== "generating");
   console.log("Rows to process:", toProcess.length);
 
   if (toProcess.length === 0) {
-    showStatus("No valid rows to process. Fill in at least URL and Recipient Name.", "error");
+    showStatus("No valid rows to process. Fill in at least the Company URL.", "error");
     return;
   }
 
@@ -407,8 +407,11 @@ generateAllBtn.addEventListener("click", async () => {
 // --- Draft All ---
 draftAllBtn.addEventListener("click", async () => {
   syncAllRows();
-  const toDraft = getSelectedOrAll().filter((r) => r.emailHtml && r.to && r.subject);
-  if (toDraft.length === 0) return;
+  const toDraft = getSelectedOrAll().filter((r) => r.emailHtml && r.to);
+  if (toDraft.length === 0) {
+    showStatus("Fill in Recipient Email for rows you want to draft.", "error");
+    return;
+  }
 
   if (!confirm(`Create ${toDraft.length} draft(s) in ${selectedProvider === "gmail" ? "Gmail" : "Outlook"}?`)) return;
 
@@ -427,7 +430,7 @@ draftAllBtn.addEventListener("click", async () => {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: row.to, subject: row.subject, emailHtml: row.emailHtml }),
+        body: JSON.stringify({ to: row.to, subject: row.subject || "[subject line]", emailHtml: row.emailHtml }),
       });
 
       const data = await res.json();
@@ -452,8 +455,11 @@ draftAllBtn.addEventListener("click", async () => {
 // --- Send All ---
 sendAllBtn.addEventListener("click", async () => {
   syncAllRows();
-  const toSend = getSelectedOrAll().filter((r) => r.emailHtml && r.to && r.subject);
-  if (toSend.length === 0) return;
+  const toSend = getSelectedOrAll().filter((r) => r.emailHtml && r.to);
+  if (toSend.length === 0) {
+    showStatus("Fill in Recipient Email for rows you want to send.", "error");
+    return;
+  }
 
   if (!confirm(`Send ${toSend.length} email(s) via ${selectedProvider === "gmail" ? "Gmail" : "Outlook"} RIGHT NOW?`)) return;
 
@@ -472,7 +478,7 @@ sendAllBtn.addEventListener("click", async () => {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: row.to, subject: row.subject, emailHtml: row.emailHtml }),
+        body: JSON.stringify({ to: row.to, subject: row.subject || "[subject line]", emailHtml: row.emailHtml }),
       });
 
       const data = await res.json();
