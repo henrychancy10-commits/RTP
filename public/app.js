@@ -325,7 +325,13 @@ tableBody.addEventListener("mousedown", (e) => {
 // Mousemove — extend selection while dragging
 tableBody.addEventListener("mousemove", (e) => {
   if (!cellSel.dragging) return;
-  const input = e.target.closest("input[type='text'], input[type='email']");
+
+  // Find the input — might be the target itself or inside the closest td
+  let input = e.target.closest("input[type='text'], input[type='email']");
+  if (!input) {
+    const td = e.target.closest("td");
+    if (td) input = td.querySelector("input[type='text'], input[type='email']");
+  }
   if (!input) return;
   const pos = getCellPos(input);
   if (!pos) return;

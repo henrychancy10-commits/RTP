@@ -471,10 +471,11 @@ td input.cell-selected {
 table.selecting {
   user-select: none;
   -webkit-user-select: none;
+  cursor: cell;
 }
 
 table.selecting td input {
-  pointer-events: none;
+  caret-color: transparent;
 }
 
 @media (max-width: 900px) {
