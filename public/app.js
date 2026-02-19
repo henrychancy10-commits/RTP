@@ -187,66 +187,8 @@ selectAllCheckbox.addEventListener("change", () => {
   tableBody.querySelectorAll(".row-check").forEach((cb) => (cb.checked = selectAllCheckbox.checked));
 });
 
-// --- Excel-style paste ---
-// When pasting multi-cell data (tab-separated, newline-separated rows),
-// spread it across columns and rows starting from the focused cell.
+// --- Excel-style cell selection state + helpers (used by paste and drag) ---
 const FIELD_ORDER = ["url", "name", "to", "subject", "competitors", "portfolio", "context"];
-
-tableBody.addEventListener("paste", (e) => {
-  const target = e.target;
-  if (!target.matches("input")) return;
-
-  const clipboardText = (e.clipboardData || window.clipboardData).getData("text");
-  if (!clipboardText) return;
-
-  // Detect multi-cell paste: has tabs or multiple lines
-  const hasMultipleCells = clipboardText.includes("\t") || clipboardText.trim().includes("\n");
-  if (!hasMultipleCells) return; // Let normal single-value paste happen
-
-  e.preventDefault();
-  syncAllRows();
-
-  // Parse pasted data into rows of values
-  const pastedRows = clipboardText.trim().split("\n").map((line) => line.split("\t").map((v) => v.trim()));
-
-  // Find which row and column the user is pasting into
-  const tr = target.closest("tr");
-  const rowId = Number(tr.dataset.id);
-  const rowIndex = rows.findIndex((r) => r.id === rowId);
-
-  // Determine which column the cursor is in
-  const fieldClass = Array.from(target.classList).find((c) => c.startsWith("field-"));
-  const fieldName = fieldClass ? fieldClass.replace("field-", "") : "";
-  const colIndex = FIELD_ORDER.indexOf(fieldName);
-  if (colIndex === -1) return;
-
-  // Add more rows if needed
-  const extraRowsNeeded = (rowIndex + pastedRows.length) - rows.length;
-  if (extraRowsNeeded > 0) {
-    for (let i = 0; i < extraRowsNeeded; i++) {
-      rows.push(createRowData());
-    }
-  }
-
-  // Fill in the data
-  for (let r = 0; r < pastedRows.length; r++) {
-    const targetRow = rows[rowIndex + r];
-    if (!targetRow) break;
-
-    for (let c = 0; c < pastedRows[r].length; c++) {
-      const fieldIdx = colIndex + c;
-      if (fieldIdx >= FIELD_ORDER.length) break;
-
-      const field = FIELD_ORDER[fieldIdx];
-      targetRow[field] = pastedRows[r][c];
-    }
-  }
-
-  renderTable();
-  showStatus(`Pasted ${pastedRows.length} row(s) of data.`, "info");
-});
-
-// --- Excel-style cell selection (click + drag) ---
 let cellSel = { dragging: false, active: false, startRow: -1, startCol: -1, endRow: -1, endCol: -1 };
 
 function getCellPos(input) {
@@ -296,6 +238,100 @@ function selectionCellCount() {
   const { minRow, maxRow, minCol, maxCol } = getSelRange();
   return (maxRow - minRow + 1) * (maxCol - minCol + 1);
 }
+
+// --- Excel-style paste ---
+// When pasting multi-cell data (tab-separated, newline-separated rows),
+// spread it across columns and rows starting from the focused cell.
+// Also fills all selected cells when a range is active.
+
+tableBody.addEventListener("paste", (e) => {
+  const target = e.target;
+  if (!target.matches("input")) return;
+
+  const clipboardText = (e.clipboardData || window.clipboardData).getData("text");
+  if (!clipboardText) return;
+
+  // If there's an active multi-cell selection, fill all selected cells
+  if (cellSel.active) {
+    e.preventDefault();
+    syncAllRows();
+    const { minRow, maxRow, minCol, maxCol } = getSelRange();
+    const value = clipboardText.trim();
+
+    // Parse clipboard — could be single value or multi-cell
+    const pastedRows = value.includes("\t") || value.includes("\n")
+      ? value.split("\n").map((line) => line.split("\t").map((v) => v.trim()))
+      : null;
+
+    for (let r = minRow; r <= maxRow && r < rows.length; r++) {
+      for (let c = minCol; c <= maxCol && c < FIELD_ORDER.length; c++) {
+        if (pastedRows) {
+          // Tile multi-cell data across the selection
+          const pr = (r - minRow) % pastedRows.length;
+          const pc = (c - minCol) % pastedRows[pr].length;
+          rows[r][FIELD_ORDER[c]] = pastedRows[pr][pc];
+        } else {
+          // Single value — fill every selected cell
+          rows[r][FIELD_ORDER[c]] = value;
+        }
+      }
+    }
+
+    const count = (maxRow - minRow + 1) * (maxCol - minCol + 1);
+    clearCellSelection();
+    renderTable();
+    showStatus(`Pasted into ${count} cell(s).`, "info");
+    return;
+  }
+
+  // Detect multi-cell paste: has tabs or multiple lines
+  const hasMultipleCells = clipboardText.includes("\t") || clipboardText.trim().includes("\n");
+  if (!hasMultipleCells) return; // Let normal single-value paste happen
+
+  e.preventDefault();
+  syncAllRows();
+
+  // Parse pasted data into rows of values
+  const pastedRows = clipboardText.trim().split("\n").map((line) => line.split("\t").map((v) => v.trim()));
+
+  // Find which row and column the user is pasting into
+  const tr = target.closest("tr");
+  const rowId = Number(tr.dataset.id);
+  const rowIndex = rows.findIndex((r) => r.id === rowId);
+
+  // Determine which column the cursor is in
+  const fieldClass = Array.from(target.classList).find((c) => c.startsWith("field-"));
+  const fieldName = fieldClass ? fieldClass.replace("field-", "") : "";
+  const colIndex = FIELD_ORDER.indexOf(fieldName);
+  if (colIndex === -1) return;
+
+  // Add more rows if needed
+  const extraRowsNeeded = (rowIndex + pastedRows.length) - rows.length;
+  if (extraRowsNeeded > 0) {
+    for (let i = 0; i < extraRowsNeeded; i++) {
+      rows.push(createRowData());
+    }
+  }
+
+  // Fill in the data
+  for (let r = 0; r < pastedRows.length; r++) {
+    const targetRow = rows[rowIndex + r];
+    if (!targetRow) break;
+
+    for (let c = 0; c < pastedRows[r].length; c++) {
+      const fieldIdx = colIndex + c;
+      if (fieldIdx >= FIELD_ORDER.length) break;
+
+      const field = FIELD_ORDER[fieldIdx];
+      targetRow[field] = pastedRows[r][c];
+    }
+  }
+
+  renderTable();
+  showStatus(`Pasted ${pastedRows.length} row(s) of data.`, "info");
+});
+
+// --- Excel-style cell selection (click + drag) event handlers ---
 
 // Mousedown — start tracking a potential drag selection
 tableBody.addEventListener("mousedown", (e) => {
