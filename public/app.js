@@ -126,6 +126,7 @@ function renderTable() {
       <td><input type="text" class="field-competitors" placeholder="CompA, CompB" value="${esc(row.competitors)}"></td>
       <td><input type="text" class="field-portfolio" placeholder="EnergyCAP..." value="${esc(row.portfolio)}"></td>
       <td><input type="text" class="field-context" placeholder="Met at SaaStr" value="${esc(row.context)}"></td>
+      <td class="col-copy">${row.emailHtml ? `<button class="btn btn-small btn-copy copy-btn" data-id="${row.id}">Copy</button>` : ""}</td>
       <td class="col-preview">${row.emailHtml ? `<span class="preview-link" data-id="${row.id}">View</span>` : ""}</td>
       <td class="col-actions"><button class="btn-icon delete-row" data-id="${row.id}" title="Remove row">&times;</button></td>
     </tr>
@@ -138,6 +139,10 @@ function renderTable() {
 
   tableBody.querySelectorAll(".preview-link").forEach((link) => {
     link.addEventListener("click", () => openPreview(Number(link.dataset.id)));
+  });
+
+  tableBody.querySelectorAll(".copy-btn").forEach((btn) => {
+    btn.addEventListener("click", () => copyRichText(Number(btn.dataset.id), btn));
   });
 
   tableBody.querySelectorAll(".row-check").forEach((cb, i) => {
@@ -503,11 +508,59 @@ function updateRowStatus(row) {
   const statusTd = tr.querySelector(".col-status");
   statusTd.innerHTML = `<span class="status-badge status-${row.status}" title="${esc(row.error)}">${formatStatus(row.status)}</span>`;
 
+  const copyTd = tr.querySelector(".col-copy");
+  if (row.emailHtml && copyTd) {
+    copyTd.innerHTML = `<button class="btn btn-small btn-copy copy-btn" data-id="${row.id}">Copy</button>`;
+    copyTd.querySelector(".copy-btn").addEventListener("click", (e) => copyRichText(row.id, e.target));
+  }
+
   const previewTd = tr.querySelector(".col-preview");
   if (row.emailHtml) {
     previewTd.innerHTML = `<span class="preview-link" data-id="${row.id}">View</span>`;
     previewTd.querySelector(".preview-link").addEventListener("click", () => openPreview(row.id));
   }
+}
+
+// --- Rich-text copy (preserves formatting when pasting into Outlook) ---
+async function copyRichText(rowId, btn) {
+  const row = rows.find((r) => r.id === rowId);
+  if (!row || !row.emailHtml) return;
+
+  // Wrap in email-safe HTML with Outlook-friendly styles
+  const wrappedHtml = `<html><body style="font-family:Calibri,Arial,sans-serif;font-size:14px;line-height:1.5;color:#333;">${row.emailHtml}</body></html>`;
+
+  try {
+    // Use Clipboard API to write both HTML and plain text
+    const htmlBlob = new Blob([wrappedHtml], { type: "text/html" });
+    const textBlob = new Blob([htmlToPlainText(row.emailHtml)], { type: "text/plain" });
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        "text/html": htmlBlob,
+        "text/plain": textBlob,
+      }),
+    ]);
+
+    // Flash the button to confirm
+    const origText = btn.textContent;
+    btn.textContent = "Copied!";
+    btn.classList.add("btn-copied");
+    setTimeout(() => {
+      btn.textContent = origText;
+      btn.classList.remove("btn-copied");
+    }, 1500);
+  } catch {
+    // Fallback: copy plain text
+    const text = htmlToPlainText(row.emailHtml);
+    await navigator.clipboard.writeText(text);
+    showStatus("Copied as plain text (rich copy not supported in this browser).", "info");
+  }
+}
+
+// Convert HTML to readable plain text (fallback)
+function htmlToPlainText(html) {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.innerText || div.textContent || "";
 }
 
 // --- Preview modal ---

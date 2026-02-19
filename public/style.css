@@ -259,6 +259,7 @@ tr:hover td {
 .col-competitors { min-width: 140px; }
 .col-portfolio { min-width: 140px; }
 .col-context { min-width: 140px; }
+.col-copy { width: 70px; text-align: center; }
 .col-preview { width: 70px; text-align: center; }
 .col-actions { width: 36px; }
 
@@ -338,6 +339,23 @@ td input::placeholder {
 .status-error {
   background: #fde8e8;
   color: #cc1a1a;
+}
+
+/* Copy button */
+.btn-copy {
+  background: #f0f0f2;
+  color: #1d1d1f;
+  border: 1px solid #d2d2d7;
+}
+
+.btn-copy:hover:not(:disabled) {
+  background: #e8e8ed;
+}
+
+.btn-copied {
+  background: #d1f2d9 !important;
+  color: #1a7f37 !important;
+  border-color: #1a7f37 !important;
 }
 
 /* Preview button */
