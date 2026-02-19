@@ -25,6 +25,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// Health check for deployment platforms
+app.get("/healthz", (req, res) => res.send("ok"));
+
 // Generate email from URL
 app.post("/api/generate", async (req, res) => {
   try {
@@ -163,8 +166,6 @@ app.post("/api/outlook/send", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`\n  RTP Email Generator is running at:\n`);
-  console.log(`  http://localhost:${PORT}\n`);
-  console.log(`  Open that URL in your browser.\n`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`\n  RTP Email Generator is running on port ${PORT}\n`);
 });
