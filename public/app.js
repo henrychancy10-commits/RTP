@@ -246,6 +246,185 @@ tableBody.addEventListener("paste", (e) => {
   showStatus(`Pasted ${pastedRows.length} row(s) of data.`, "info");
 });
 
+// --- Excel-style cell selection (click + drag) ---
+let cellSel = { dragging: false, active: false, startRow: -1, startCol: -1, endRow: -1, endCol: -1 };
+
+function getCellPos(input) {
+  const tr = input.closest("tr");
+  if (!tr) return null;
+  const rowId = Number(tr.dataset.id);
+  const rowIndex = rows.findIndex((r) => r.id === rowId);
+  if (rowIndex === -1) return null;
+  const fieldClass = Array.from(input.classList).find((c) => c.startsWith("field-"));
+  if (!fieldClass) return null;
+  const colIndex = FIELD_ORDER.indexOf(fieldClass.replace("field-", ""));
+  if (colIndex === -1) return null;
+  return { rowIndex, colIndex };
+}
+
+function getSelRange() {
+  return {
+    minRow: Math.min(cellSel.startRow, cellSel.endRow),
+    maxRow: Math.max(cellSel.startRow, cellSel.endRow),
+    minCol: Math.min(cellSel.startCol, cellSel.endCol),
+    maxCol: Math.max(cellSel.startCol, cellSel.endCol),
+  };
+}
+
+function highlightCells() {
+  tableBody.querySelectorAll("input.cell-selected").forEach((el) => el.classList.remove("cell-selected"));
+  if (cellSel.startRow === -1) return;
+  const { minRow, maxRow, minCol, maxCol } = getSelRange();
+  for (let r = minRow; r <= maxRow && r < rows.length; r++) {
+    const tr = tableBody.querySelector(`tr[data-id="${rows[r].id}"]`);
+    if (!tr) continue;
+    for (let c = minCol; c <= maxCol && c < FIELD_ORDER.length; c++) {
+      const input = tr.querySelector(`.field-${FIELD_ORDER[c]}`);
+      if (input) input.classList.add("cell-selected");
+    }
+  }
+}
+
+function clearCellSelection() {
+  cellSel = { dragging: false, active: false, startRow: -1, startCol: -1, endRow: -1, endCol: -1 };
+  tableBody.querySelectorAll("input.cell-selected").forEach((el) => el.classList.remove("cell-selected"));
+  const tbl = tableBody.closest("table");
+  if (tbl) tbl.classList.remove("selecting");
+}
+
+function selectionCellCount() {
+  const { minRow, maxRow, minCol, maxCol } = getSelRange();
+  return (maxRow - minRow + 1) * (maxCol - minCol + 1);
+}
+
+// Mousedown — start tracking a potential drag selection
+tableBody.addEventListener("mousedown", (e) => {
+  const input = e.target.closest("input[type='text'], input[type='email']");
+  if (!input) return;
+  const pos = getCellPos(input);
+  if (!pos) return;
+
+  // Shift+click extends existing selection
+  if (e.shiftKey && cellSel.startRow !== -1) {
+    e.preventDefault();
+    cellSel.endRow = pos.rowIndex;
+    cellSel.endCol = pos.colIndex;
+    cellSel.active = true;
+    highlightCells();
+    return;
+  }
+
+  cellSel.startRow = pos.rowIndex;
+  cellSel.startCol = pos.colIndex;
+  cellSel.endRow = pos.rowIndex;
+  cellSel.endCol = pos.colIndex;
+  cellSel.dragging = true;
+  cellSel.active = false;
+});
+
+// Mousemove — extend selection while dragging
+tableBody.addEventListener("mousemove", (e) => {
+  if (!cellSel.dragging) return;
+  const input = e.target.closest("input[type='text'], input[type='email']");
+  if (!input) return;
+  const pos = getCellPos(input);
+  if (!pos) return;
+
+  if (pos.rowIndex !== cellSel.startRow || pos.colIndex !== cellSel.startCol) {
+    cellSel.active = true;
+    tableBody.closest("table").classList.add("selecting");
+  }
+  cellSel.endRow = pos.rowIndex;
+  cellSel.endCol = pos.colIndex;
+  highlightCells();
+  if (cellSel.active) e.preventDefault();
+});
+
+// Mouseup — finalize
+document.addEventListener("mouseup", () => {
+  if (!cellSel.dragging) return;
+  cellSel.dragging = false;
+  const tbl = tableBody.closest("table");
+  if (tbl) tbl.classList.remove("selecting");
+  // Single cell click — don't activate selection, let normal editing work
+  if (cellSel.startRow === cellSel.endRow && cellSel.startCol === cellSel.endCol) {
+    cellSel.active = false;
+    highlightCells();
+  }
+});
+
+// Click outside the table clears selection
+document.addEventListener("mousedown", (e) => {
+  if (cellSel.active && !e.target.closest("#bulkTable")) {
+    clearCellSelection();
+  }
+});
+
+// Keyboard shortcuts for selection
+document.addEventListener("keydown", (e) => {
+  if (!cellSel.active) return;
+
+  // Ctrl+C / Cmd+C — copy selected cells as tab-separated text
+  if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+    e.preventDefault();
+    syncAllRows();
+    const { minRow, maxRow, minCol, maxCol } = getSelRange();
+    const lines = [];
+    for (let r = minRow; r <= maxRow && r < rows.length; r++) {
+      const cells = [];
+      for (let c = minCol; c <= maxCol && c < FIELD_ORDER.length; c++) {
+        cells.push(rows[r][FIELD_ORDER[c]] || "");
+      }
+      lines.push(cells.join("\t"));
+    }
+    navigator.clipboard.writeText(lines.join("\n"));
+    showStatus(`Copied ${selectionCellCount()} cell(s).`, "info");
+    return;
+  }
+
+  // Delete / Backspace — clear selected cells
+  if (e.key === "Delete" || e.key === "Backspace") {
+    e.preventDefault();
+    syncAllRows();
+    const { minRow, maxRow, minCol, maxCol } = getSelRange();
+    for (let r = minRow; r <= maxRow && r < rows.length; r++) {
+      for (let c = minCol; c <= maxCol && c < FIELD_ORDER.length; c++) {
+        rows[r][FIELD_ORDER[c]] = "";
+      }
+    }
+    const count = selectionCellCount();
+    clearCellSelection();
+    renderTable();
+    showStatus(`Cleared ${count} cell(s).`, "info");
+    return;
+  }
+
+  // Escape — clear selection
+  if (e.key === "Escape") {
+    clearCellSelection();
+    return;
+  }
+
+  // Ctrl+A / Cmd+A — select all editable cells
+  if ((e.ctrlKey || e.metaKey) && e.key === "a") {
+    e.preventDefault();
+    cellSel.startRow = 0;
+    cellSel.startCol = 0;
+    cellSel.endRow = rows.length - 1;
+    cellSel.endCol = FIELD_ORDER.length - 1;
+    cellSel.active = true;
+    highlightCells();
+    showStatus(`Selected all cells (${selectionCellCount()}).`, "info");
+    return;
+  }
+
+  // Normal typing — clear selection and let the keypress through
+  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+    clearCellSelection();
+    return;
+  }
+});
+
 // --- CSV ---
 downloadTemplateBtn.addEventListener("click", () => {
   const header = "url,name,to,subject,competitors,portfolio,context";

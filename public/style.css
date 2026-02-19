@@ -461,6 +461,22 @@ th input[type="checkbox"] {
   cursor: pointer;
 }
 
+/* Cell selection (Excel-style drag) */
+td input.cell-selected {
+  background: #d4e4ff !important;
+  border-color: #0071e3 !important;
+  box-shadow: inset 0 0 0 1px #0071e3;
+}
+
+table.selecting {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+table.selecting td input {
+  pointer-events: none;
+}
+
 @media (max-width: 900px) {
   .header-row {
     flex-direction: column;
