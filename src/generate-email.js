@@ -82,12 +82,27 @@ export async function generateEmail(urlContent, options = {}) {
   return text.trim();
 }
 
+/**
+ * Format semicolon-separated names into a natural greeting string.
+ * "John"           -> "John"
+ * "John;Jane"      -> "John & Jane"
+ * "John;Jane;Mike" -> "John, Jane and Mike"
+ */
+function formatNames(raw) {
+  if (!raw) return "[FIRST NAME]";
+  const names = raw.split(";").map((n) => n.trim()).filter(Boolean);
+  if (names.length === 0) return "[FIRST NAME]";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} & ${names[1]}`;
+  return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+}
+
 function buildUserMessage(urlContent, { recipientName, competitors, portfolio, context }) {
   // The prompt says "All I will put into the chat will be the URL" — so we lead with
   // the URL and append the scraped content plus any optional inputs.
   let msg = `${urlContent.url}\n`;
 
-  msg += `\nRecipient name: ${recipientName}\n`;
+  msg += `\nRecipient name: ${formatNames(recipientName)}\n`;
 
   // Append scraped page content so Claude doesn't need web access
   msg += `\n--- Scraped page content ---\n`;
