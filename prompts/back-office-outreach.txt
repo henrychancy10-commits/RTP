@@ -1,0 +1,158 @@
+Hospitality Back-Office Outreach Email Generation (RTP)
+
+TONE GUIDELINES — READ BEFORE WRITING
+Before sending, read the value prop paragraph out loud. Ask:
+- Would I say this to a colleague explaining why I'm interested?
+- Does it sound like me talking, or like a robot/consultant?
+- Am I showing real research or just restating what's on their site?
+- Is this email actually providing real value?
+- Is the "why it matters" insight actually insightful?
+- Did I avoid listing use cases, features, or customer types?
+If yes to all, you've nailed the tone.
+
+ALWAYS:
+- Conversational, natural language (like talking to a peer)
+- Show genuine research into their differentiation
+- Stay humble with phrases like "from what we can tell"
+- Keep it tight, no fluff or unnecessary words
+- Use "based on our own research that matters because" for the insight beat
+- Synthesize their differentiation, don't enumerate their capabilities
+
+NEVER:
+- Use formal business language ("leverage," "synergies," "best-in-class")
+- Use bullet points, numbered lists, or em dashes
+- Sound like you're reading a product sheet or press release
+- Use technical jargon unnecessarily
+- List use cases, customer segments, or features
+- Use em dashes
+- Go over 6 sentences in the value prop paragraph
+- Start sentences with "The platform..." or "The company..." , just describe what they do
+
+
+Objective
+Write a first-touch outreach email to a hospitality back-office software company using our short deck outlining our thoughts on the space. The email must mirror the tone, cadence, paragraphing, and flow of the example at the end of this prompt. The output must be the complete email only.
+
+
+Non-Negotiable Constraints
+Under 600 words. No bullet points. No em dashes. No exaggerated praise, no hype, no superlatives. No speculation about financials. Do not invent metrics. Competitive commentary must focus on public or institutionally backed companies in the recipient's exact segment. Never broadly disparage PE-backed or institutional strategies. Only mention distraction from core or focus drift when there is specific, defensible evidence such as many acquisitions, meaningful product sprawl, or a clear deviation away from the sub-segment being discussed.
+
+
+Paragraph Length Control — Strict
+The following three paragraphs combined must not exceed the length and density of the reference example:
+1. The Market Structure paragraph beginning with "At a category level, what makes..."
+2. The Competitive Landscape paragraph beginning with "In mapping the segment..."
+3. The Company-Specific Positioning paragraph beginning with "What stood out about..."
+
+Each of these paragraphs should generally be 3 to 4 sentences maximum. The three together should not materially exceed the word count or density of the reference example. If a paragraph starts to feel like a category memo or internal IC write-up, shorten it. The goal is clarity and conviction, not comprehensiveness.
+
+
+Do Not Dumb Down the Problem Being Solved
+These companies are not replacing paper or simply moving people off spreadsheets. Avoid framing the problem as primitive or unsophisticated. Describe pain points at the level buyers actually operate in: portfolio complexity, operational variability, integrations, implementation friction, multi-entity reporting, speed of close, compliance, standardization, labor pressure, and workflow depth. If spreadsheets are mentioned, it must be in a nuanced context such as consolidation layers or edge-case reporting, not as the primary problem.
+
+
+Segment Accuracy Rule
+The market structure discussion must match the company's actual workflow category. Do not reuse accounting language for a labor, operations, or BI platform unless it truly applies. Problems described must align with the specific segment.
+
+
+Competitor Relevance Rule
+Competitors referenced must operate in the same workflow category, not just broadly in hospitality software. If no scaled public or institutionally backed competitor exists in the exact niche, reference the closest adjacent scaled platform and clearly state it touches the workflow rather than implying it is a direct competitor.
+
+
+No Over-Claiming About Incumbents
+Avoid hard claims about specific competitors unless clearly defensible. Frame structural observations as category patterns, not accusations about individual companies.
+Better: "In our experience, implementations in this category can still be heavy."
+Worse: "X's implementations are slow."
+Do not make broad assumptions, this can kill credibility, root in fact.
+
+
+Tone Requirements — Extremely Important
+The tone must be conversational and serious at the same time. Write like you are talking to a founder or CEO, but you clearly did the work. Use contractions where natural. Vary sentence length. Each paragraph should contain at least one short sentence to maintain cadence. Avoid sounding like a memo. Avoid sounding like marketing. If you find yourself expanding beyond the scope of the reference example in either length or depth, compress. The email should feel sharp and disciplined, not exhaustive. Keep in mind that we are trying to tell them "why" we are interested in their business vs. simply reiterating to the founder of the company what they do.
+
+Good tone examples:
+"I might be wrong, but it seems like most teams still run this workflow across a patchwork of systems, which is why implementation speed ends up mattering as much as depth."
+"As platforms expand into more modules, it can get harder to keep real depth in the workflows operators live in every day."
+
+Bad tone examples:
+"We are impressed by your best-in-class, comprehensive solution and market-leading innovation."
+"Your platform is uniquely positioned to disrupt the industry through a robust suite of capabilities."
+
+
+Strict Anti-Listing Rule
+Do not list use cases. Do not list customer segments. Do not list features. Do not write comma-separated inventories. You may reference one concrete workflow moment to show you understand how they win, but do not stack multiple examples.
+
+Explicitly disallowed patterns:
+"What caught our attention is how you serve multiple use cases. Construction companies use it for per diem tracking, nonprofits use it for donor restrictions, and media companies use it for production spend."
+"You work with healthcare providers, financial services firms, and manufacturing companies to solve their compliance needs."
+"Your platform offers virtual cards, spend controls, receipt matching, and real-time reporting."
+
+
+Ownership Tone Rules
+When referencing public or institutionally backed companies: describe them neutrally and respectfully. You may note scale, installed base, acquisition history, or platform breadth if factually accurate. You may discuss tradeoffs of platform expansion in neutral structural terms.
+
+You must not imply institutional ownership is inherently negative, suggest PE shifts roadmaps in harmful ways, criticize roll-up strategy without clear operational context, or frame PE backing as distraction or short-termism.
+
+Acceptable framing: "As platforms expand into more modules, depth in any single workflow can become harder to prioritize."
+
+
+Parenthetical Limit
+No more than one parenthetical in the entire email beyond "(cc'd)" and "($800M third fund)".
+
+
+Required Structure — Flexible but Anchored to the Example
+
+Opening line: Must begin with: "[RecipientFirstName] - hope all is well." Use a hyphen, not an em dash. Then a blank line.
+
+Context and Why Now paragraph: Must be a single combined paragraph. Must include language extremely close to:
+"For some context, Henry Chancy (cc'd) and I lead our broader hospitality tech efforts (heavy focus on hotels) at Resurgens, a software-focused investment firm based in Atlanta ($800M third fund). We've been spending a significant amount of time in the back-office vendor landscape and wanted to share the attached deck that highlights the 'why' behind our focus on the space (including a market map for both the US and European vendors) and additional context below that describes our specific interest in what you and the team are building at [company]. I know there is a lot of detail, but we think it's helpful in order to convey our seriousness."
+Do not split this into two separate paragraphs. Do not use the old "What prompted this note is that Henry and I have been spending..." construction.
+
+Market structure paragraph: Must start with: "At a category level, what makes [segment] particularly interesting to us is..." Maximum 4 sentences. Tight, analytical, segment-specific.
+
+Competitive landscape paragraph: Must include: "In mapping the segment, we've noted..." Maximum 4 sentences. Focus on 1 to 3 relevant scaled public or institutionally backed players.
+
+Company-Specific Positioning paragraph: Must start with: "What stood out about [Company] is..." This paragraph must demonstrate market understanding and investment judgment, not product listing. You may use a "From our perspective... that matters because..." framing, but it must not stack features or read like a product tour. Maximum 4 sentences. Focus on structural differentiation and why it matters economically or operationally.
+
+Close paragraph: Must preserve the example's posture. Acknowledge they may not be looking for capital and that you are not trying to convince them otherwise. Emphasize being helpful. End with: "Just let me know, and I can share our availability."
+
+Sign off — exactly: Sincerely, David
+
+
+Final Quality Check Before Output
+Under 600 words. No bullets. No em dashes. No feature or segment lists. All proper nouns spelled correctly. Deck paragraph copied exactly. Tone conversational but analytical. Context and why-now are one combined paragraph using the updated language above.
+
+
+Research Inputs Required
+- Company name
+- Recipient name (optional, if not provided use [FIRST NAME] as placeholder)
+- Primary segment
+- 1 to 3 relevant public or institutionally backed competitors
+- 2 to 3 structural differentiators
+- Optional defensible positioning signal
+
+
+Output Requirement
+Output the complete email only. No notes. No explanations.
+
+---
+
+EXAMPLE OUTPUT (REFERENCE STYLE — MUST MIRROR EXACTLY)
+
+Jeff - hope all is well.
+
+For some context, Henry Chancy (cc'd) and I lead our broader hospitality tech efforts (heavy focus on hotels) at Resurgens, a software-focused investment firm based in Atlanta ($800M third fund). We've been spending a significant amount of time in the back-office vendor landscape and wanted to share the attached deck that highlights the "why" behind our focus on the space (including a market map for both the US and European vendors) and additional context below that describes our specific interest in what you and the team are building at HIA. I know there is a lot of detail, but we think it's helpful in order to convey our seriousness.
+
+At a category level, what makes hospitality accounting particularly interesting to us is how long the category has existed while still remaining meaningfully fragmented. M3 is the scaled incumbent in the space, now institutionally backed, with deep hospitality domain credibility and a large installed base. At the same time, many management groups still rely on horizontal tools like NetSuite, Sage, or QuickBooks, especially where multi-property workflows are handled through manual consolidation. This leaves a large portion of the market operating on older architecture or horizontal systems not designed around USALI structures, daily reporting, or portfolio-level operational visibility.
+
+In mapping the segment, we've noted a handful of scaled and institutionally backed businesses with real presence. M3 remains the obvious reference point, and we also see broader platforms like Oracle and Infor touching parts of the market through adjacent hospitality modules. These are strong companies with meaningful distribution, but the transition to modern cloud workflows, faster implementations, and better portfolio reporting still appears to be an open opportunity for purpose-built platforms.
+
+What stood out about HIA is the combination of modern architecture and workflow depth. Built cloud-native on a modern ERP backbone, you are not retrofitting legacy infrastructure to support multi-entity hospitality accounting. The automation around PMS and POS ingestion and AI-enabled invoice coding ties directly to the labor cost pressures operators are facing. Just as importantly, the product appears designed around multi-property management groups that need standardized reporting and visibility across dozens of hotels, which is where we believe the most durable software platforms in this category will continue to win.
+
+We know you get too many cold investor notes and may not be looking for capital (we won't try to convince you otherwise). That said, we'd love to introduce ourselves, hear the story behind HIA, and find ways we can be helpful. Just let me know, and I can share our availability.
+
+Sincerely, David
+
+---
+
+## HTML Output
+
+Output the email body as clean HTML using <p>, <em>, <br> tags only. Do not use <ul>, <li>, <strong>, or bold headers. Do not wrap the output in code fences. The email should render as flowing paragraphs with no bullet points, no bold text, and no headers, consistent with the formatting rules above.

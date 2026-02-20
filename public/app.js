@@ -1,12 +1,14 @@
 // --- State ---
 let rows = []; // { id, url, name, to, subject, competitors, portfolio, context, status, emailHtml, error }
 let selectedProvider = "gmail";
+let selectedTemplate = "";
 let currentPreviewRowId = null;
 let nextId = 1;
 let isProcessing = false;
 
 // --- DOM refs ---
 const tableBody = document.getElementById("tableBody");
+const templateSelect = document.getElementById("templateSelect");
 const generateAllBtn = document.getElementById("generateAllBtn");
 const draftAllBtn = document.getElementById("draftAllBtn");
 const sendAllBtn = document.getElementById("sendAllBtn");
@@ -31,10 +33,35 @@ const statusMessage = document.getElementById("statusMessage");
 // --- Init ---
 addRows(5);
 checkGmailStatus();
+loadTemplates();
 if (window.location.search.includes("gmail=connected")) {
   window.history.replaceState({}, "", "/");
   checkGmailStatus();
 }
+
+// --- Template selector ---
+async function loadTemplates() {
+  try {
+    const res = await fetch("/api/templates");
+    const templates = await res.json();
+    templateSelect.innerHTML = "";
+    templates.forEach((t, i) => {
+      const opt = document.createElement("option");
+      opt.value = t.slug;
+      opt.textContent = t.name;
+      templateSelect.appendChild(opt);
+    });
+    if (templates.length > 0) {
+      selectedTemplate = templates[0].slug;
+    }
+  } catch {
+    templateSelect.innerHTML = '<option value="">Default</option>';
+  }
+}
+
+templateSelect.addEventListener("change", () => {
+  selectedTemplate = templateSelect.value;
+});
 
 // --- Provider toggle ---
 document.querySelectorAll(".provider-btn").forEach((btn) => {
@@ -600,6 +627,7 @@ generateAllBtn.addEventListener("click", async () => {
           competitors: row.competitors,
           portfolio: row.portfolio,
           context: row.context,
+          template: selectedTemplate,
         }),
       });
 

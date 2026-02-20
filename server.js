@@ -2,6 +2,7 @@
 import "dotenv/config";
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { fetchUrlContent } from "./src/fetch-url.js";
 import { generateEmail } from "./src/generate-email.js";
@@ -28,13 +29,39 @@ app.use(express.static(path.join(__dirname, "public")));
 // Health check for deployment platforms
 app.get("/healthz", (req, res) => res.send("ok"));
 
+// Template registry — maps display names to prompt files
+const PROMPTS_DIR = path.join(__dirname, "prompts");
+const TEMPLATES = {};
+
+// Auto-discover prompt files from the prompts/ directory
+if (fs.existsSync(PROMPTS_DIR)) {
+  for (const file of fs.readdirSync(PROMPTS_DIR).filter((f) => f.endsWith(".txt"))) {
+    const slug = file.replace(/\.txt$/, "");
+    // Convert slug to display name: "master-claude-outreach" -> "Master Claude Outreach"
+    const name = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    TEMPLATES[slug] = { name, file: path.join(PROMPTS_DIR, file) };
+  }
+}
+
+// List available templates
+app.get("/api/templates", (req, res) => {
+  const list = Object.entries(TEMPLATES).map(([slug, t]) => ({ slug, name: t.name }));
+  res.json(list);
+});
+
 // Generate email from URL
 app.post("/api/generate", async (req, res) => {
   try {
-    const { url, name, competitors, portfolio, context, model, promptFile } = req.body;
+    const { url, name, competitors, portfolio, context, model, template } = req.body;
 
     if (!url) {
       return res.status(400).json({ error: "URL is required." });
+    }
+
+    // Resolve prompt file from template slug
+    let promptFile;
+    if (template && TEMPLATES[template]) {
+      promptFile = TEMPLATES[template].file;
     }
 
     const urlContent = await fetchUrlContent(url);
