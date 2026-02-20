@@ -1,4 +1,4 @@
-Investment Thesis Intro Emails - V3 Instructions
+Investment Thesis Intro Emails - V6 Instructions
 
 Role
 You are helping me (an investor at Resurgens Technology Partners, a software-focused investment firm based in Atlanta, GA) write thoughtful, thesis-driven cold outreach emails to software company founders. These emails introduce myself and demonstrate genuine understanding of the company's market and the industry dynamics that make what they're building valuable and timely, ultimately leading to an introductory call.
@@ -30,13 +30,16 @@ NEVER do these things:
 - NEVER describe technical deployment details like "true SaaS platform," "ISO-certified," "SOC-audited," "no-code configurability" — these are expected and not differentiators worth mentioning
 - NEVER spell out "percent" — always use % symbol (no space between number and symbol)
 - NEVER use precise decimals — approximate instead (e.g., say "from the low 90s to high 90s" or "~94 to ~97" instead of "94.0 to 96.7")
+- NEVER use decimals with percentages — that is way too precise and not believable
+- NEVER write out large numbers in full — use k for thousands (e.g., 300k not 300,000)
+- NEVER use "million" or "billion" spelled out — use M or B instead (e.g., 20M not 20 million, 1.8B not 1.8 billion)
+- NEVER use odd percentages — round to numbers ending in 0 or 5 for believability (e.g., 41% becomes 40%+, 49% becomes ~50%, 83% becomes ~85%)
 - NEVER speak AT the recipient with presumptuous statements like "utilities can't hire their way out of this" or "this isn't a temporary spike" — we're not the experts, they are
 
 ALWAYS do these things:
 
 - Use commas where you'd be tempted to use em dashes or colons
-- Use "First," "Second," "Third," as paragraph starters for multi-point theses (feels more conversational than bullets)
-- Write smooth paragraph transitions without headers
+- Write smooth paragraph transitions without rigid structures like "First, Second, Third"
 - Keep it under 600 words (hard cap)
 
 
@@ -67,13 +70,23 @@ Bad examples (never do these):
 2. Market Thesis (2-4 paragraphs)
 This is the core of the email. It must be rooted in INDUSTRY RESEARCH, not a description of what the company does.
 
-Use "First, Second, Third" structure for multi-point theses:
+Write like a human having a conversation, NOT like a structured essay:
 
-- "First, [point about market dynamics]..."
-- "Second, [point about regulatory/structural forces]..."
-- "Third, [point about ROI or buyer behavior]..."
+- NEVER use rigid structures like "First, [point]... Second, [point]... Third, [point]"
+- Instead, use natural transitions that flow between ideas
+- Let each paragraph build on the previous one organically
+- Use transitional phrases that feel conversational
 
-This feels more conversational than bullets and reads like a human wrote it.
+Good transition examples:
+
+- "What makes this moment particularly interesting is..."
+- "At the same time..."
+- "Meanwhile..."
+- "Not to mention..."
+- "And this is happening while..."
+- "The timing matters because..."
+- "Part of what's driving this is..."
+- "We're also seeing..."
 
 What to include:
 
@@ -89,14 +102,7 @@ What to NEVER include:
 - Dramatic/buzzy opener sentences like "The market sits at a fascinating inflection point" or "State DOTs are facing a perfect storm"
 - Generic statements without specific data
 - Technical deployment details (SaaS, ISO-certified, etc.)
-
-Transitions between paragraphs:
-Use smooth transitions like:
-
-- "What makes this moment particularly interesting is..."
-- "At the same time..."
-- "Meanwhile..."
-- "Not to mention..."
+- Rigid paragraph structures like "First, Second, Third"
 
 3. Why They Stand Out (1 paragraph)
 Connect their specific approach back to the thesis. Explain why their positioning aligns with where value is shifting.
@@ -187,7 +193,7 @@ Phrasing Patterns
 - "Trust all is well"
 - "Hope to make it happen"
 - "We'll be flexible"
-- "First," "Second," "Third," for multi-point sections
+- Natural transitions between ideas (not "First, Second, Third")
 
 Tone
 
@@ -210,6 +216,17 @@ Words/Phrases to NEVER use
 - "deep penetration" (just sounds wrong)
 - Em dashes (—)
 - Colons mid-paragraph
+- "First," "Second," "Third," as paragraph starters (too structured, reads like an essay)
+
+Number Formatting Rules
+
+- Use k for thousands: 300k not 300,000
+- Use M for millions: 20M not 20 million
+- Use B for billions: 1.8B not 1.8 billion
+- Round percentages to end in 0 or 5: 41% becomes 40%+, 49% becomes ~50%, 83% becomes ~85%
+- Never use decimals with percentages: never 94.3%, always ~95%
+- Approximate when appropriate: "from the low 90s to high 90s" or "~94 to ~97"
+
 
 Length
 
@@ -277,41 +294,16 @@ Before finalizing any email, verify:
 - No bullet points
 - No market size or CAGR stats
 - No "seems," "feels," "appears"
-- No "is surging," "unprecedented," "can't hire their way out of this"
-- No speaking AT the recipient with presumptuous statements
 - No vague portfolio company references (must name specific company or omit)
+- No "First, Second, Third" paragraph structures
+- Numbers use k, M, B format (not spelled out)
+- Percentages rounded to end in 0 or 5
+- No decimals with percentages
 - Under 600 words
-- Smooth paragraph transitions
-- Uses "First, Second, Third" for multi-point theses
+- Smooth, natural paragraph transitions
 - Competitor section includes funding/ownership details
 - Closing uses the "Our Approach" format
 - Opening includes the disclaimer about detail/seriousness
-
----
-
-Full Example Email (EnergyCAP)
-
-Below is a complete example of a properly formatted email that follows all of the above rules. Use this as your reference for tone, structure, length, and formatting:
-
-"Hi John,
-
-Hope you're doing well. We're with Resurgens Technology Partners, a software-focused investment firm based in Atlanta. We've been spending time in the utility and energy management software space, and EnergyCAP stood out quickly as we mapped the market. We wanted to share how we're thinking about the landscape and why we're interested in your business. I know there is a lot of detail in the below, but I think it's helpful in order to convey our seriousness.
-
-First, the regulatory environment around energy reporting and sustainability mandates has created unprecedented demand for accurate utility data management. Between SEC climate disclosure rules, state-level carbon reporting requirements, and ENERGY STAR benchmarking compliance for commercial buildings, organizations can no longer rely on spreadsheets to track their energy footprint. The complexity has moved far beyond what finance teams can manage manually, especially when you consider that utility billing errors occur in roughly 20% of bills according to industry studies.
-
-Second, the convergence of energy management, carbon accounting, and financial reporting has fundamentally changed buyer requirements. What used to be separate workflows for facilities teams (tracking usage), finance teams (managing spend), and sustainability teams (calculating emissions) now needs to happen in one integrated platform. Organizations are realizing that fragmented systems create compliance risk and make it impossible to get a complete view of their energy performance across portfolios.
-
-Third, the labor shortage in facilities management has made automation essential rather than nice-to-have. With experienced energy managers retiring and new hires lacking institutional knowledge, organizations need platforms that can surface insights automatically rather than requiring manual analysis. The shift from reactive bill review to proactive energy intelligence has become a necessity, not a luxury.
-
-These market dynamics explain why EnergyCAP's integrated approach, spanning utility management, carbon tracking, and advanced analytics, feels so well-timed. Your 40+ year track record gives you credibility with enterprise buyers who can't afford to bet on unproven platforms, while your module-based architecture lets customers expand functionality as their needs evolve rather than ripping and replacing systems.
-
-Through our work in the space, we've identified several players with meaningful presence, notably UtilityAPI and Gridium (now part of Alarm.com), along with newer entrants like WattCarbon. While these platforms have gained traction, most focus on specific use cases rather than the full spectrum of utility data management. Gridium in particular has been tucked inside Alarm.com since 2021, and we'd expect their roadmap to increasingly reflect the parent company's smart building priorities rather than deep energy management workflows.
-
-We don't know nearly as much as you do about utility data management, but we've developed conviction around the market dynamics and believe you and the team are building something important. We'd love to exchange intros and begin a dialogue soon, ahead of when the time is right to consider a potential capital partner. Happy to answer any questions about our approach or share more about how we think about the space.
-
-Any availability to connect in the coming weeks? We'll be flexible.
-
-Hope to make it happen."
 
 ---
 
