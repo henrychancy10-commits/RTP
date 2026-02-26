@@ -67,16 +67,51 @@ export async function generateEmail(urlContent, options = {}) {
 
   const userMessage = buildUserMessage(urlContent, { recipientName, competitors, portfolio, context });
 
-  const response = await client.messages.create({
+  let messages = [{ role: "user", content: userMessage }];
+
+  let response = await client.messages.create({
     model,
     max_tokens: 16000,
     thinking: {
       type: "enabled",
       budget_tokens: 10000,
     },
+    tools: [
+      {
+        type: "web_search_20250305",
+        name: "web_search",
+        max_uses: 10,
+      },
+    ],
     system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
+    messages,
   });
+
+  // Handle pause_turn: the API may pause long-running web search turns
+  while (response.stop_reason === "pause_turn") {
+    console.log("  Web search in progress, continuing...");
+    messages = [
+      ...messages,
+      { role: "assistant", content: response.content },
+    ];
+    response = await client.messages.create({
+      model,
+      max_tokens: 16000,
+      thinking: {
+        type: "enabled",
+        budget_tokens: 10000,
+      },
+      tools: [
+        {
+          type: "web_search_20250305",
+          name: "web_search",
+          max_uses: 10,
+        },
+      ],
+      system: systemPrompt,
+      messages,
+    });
+  }
 
   const text = response.content
     .filter((block) => block.type === "text")
