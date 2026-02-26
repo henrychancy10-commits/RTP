@@ -69,7 +69,11 @@ export async function generateEmail(urlContent, options = {}) {
 
   const response = await client.messages.create({
     model,
-    max_tokens: 2048,
+    max_tokens: 16000,
+    thinking: {
+      type: "enabled",
+      budget_tokens: 10000,
+    },
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
   });
