@@ -67,73 +67,19 @@ export async function generateEmail(urlContent, options = {}) {
 
   const userMessage = buildUserMessage(urlContent, { recipientName, competitors, portfolio, context });
 
-  let messages = [{ role: "user", content: userMessage }];
-
-  let response = await client.messages.create({
+  const response = await client.messages.create({
     model,
-    max_tokens: 16000,
-    thinking: {
-      type: "enabled",
-      budget_tokens: 10000,
-    },
-    tools: [
-      {
-        type: "web_search_20250305",
-        name: "web_search",
-        max_uses: 10,
-      },
-    ],
+    max_tokens: 2048,
     system: systemPrompt,
-    messages,
+    messages: [{ role: "user", content: userMessage }],
   });
 
-  // Handle pause_turn: the API may pause long-running web search turns
-  while (response.stop_reason === "pause_turn") {
-    console.log("  Web search in progress, continuing...");
-    messages = [
-      ...messages,
-      { role: "assistant", content: response.content },
-    ];
-    response = await client.messages.create({
-      model,
-      max_tokens: 16000,
-      thinking: {
-        type: "enabled",
-        budget_tokens: 10000,
-      },
-      tools: [
-        {
-          type: "web_search_20250305",
-          name: "web_search",
-          max_uses: 10,
-        },
-      ],
-      system: systemPrompt,
-      messages,
-    });
-  }
-
-  // Extract only the final email HTML, ignoring search narration text blocks.
-  // The email is the last text block and contains HTML tags like <p>.
-  const textBlocks = response.content
+  const text = response.content
     .filter((block) => block.type === "text")
-    .map((block) => block.text);
+    .map((block) => block.text)
+    .join("");
 
-  // Find the last text block that contains HTML (the actual email)
-  let email = "";
-  for (let i = textBlocks.length - 1; i >= 0; i--) {
-    if (textBlocks[i].includes("<p>")) {
-      email = textBlocks[i];
-      break;
-    }
-  }
-
-  // If no HTML block found, fall back to joining all text blocks
-  if (!email) {
-    email = textBlocks.join("");
-  }
-
-  return email.trim();
+  return text.trim();
 }
 
 /**
