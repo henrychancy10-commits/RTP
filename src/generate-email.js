@@ -113,12 +113,27 @@ export async function generateEmail(urlContent, options = {}) {
     });
   }
 
-  const text = response.content
+  // Extract only the final email HTML, ignoring search narration text blocks.
+  // The email is the last text block and contains HTML tags like <p>.
+  const textBlocks = response.content
     .filter((block) => block.type === "text")
-    .map((block) => block.text)
-    .join("");
+    .map((block) => block.text);
 
-  return text.trim();
+  // Find the last text block that contains HTML (the actual email)
+  let email = "";
+  for (let i = textBlocks.length - 1; i >= 0; i--) {
+    if (textBlocks[i].includes("<p>")) {
+      email = textBlocks[i];
+      break;
+    }
+  }
+
+  // If no HTML block found, fall back to joining all text blocks
+  if (!email) {
+    email = textBlocks.join("");
+  }
+
+  return email.trim();
 }
 
 /**
