@@ -38,9 +38,10 @@ export function loadSystemPrompt(promptFile) {
 }
 
 /**
- * Uses Claude to generate an email body from URL content.
+ * Uses Claude to generate an email body from a company URL.
+ * Claude will fetch and research the URL itself via web search.
  *
- * @param {object} urlContent - Output from fetchUrlContent()
+ * @param {string} url - Company URL to research
  * @param {object} options
  * @param {string} options.recipientName - Recipient name(s) for the greeting
  * @param {string} [options.competitors] - Known competitors, comma-separated
@@ -50,7 +51,7 @@ export function loadSystemPrompt(promptFile) {
  * @param {string} [options.promptFile] - Path to a file containing the system prompt
  * @returns {Promise<string>} Generated email HTML body
  */
-export async function generateEmail(urlContent, options = {}) {
+export async function generateEmail(url, options = {}) {
   const {
     recipientName = "",
     competitors = "",
@@ -65,7 +66,7 @@ export async function generateEmail(urlContent, options = {}) {
 
   const client = new Anthropic();
 
-  const userMessage = buildUserMessage(urlContent, { recipientName, competitors, portfolio, context });
+  const userMessage = buildUserMessage(url, { recipientName, competitors, portfolio, context });
 
   let messages = [{ role: "user", content: userMessage }];
 
@@ -136,19 +137,10 @@ function formatNames(raw) {
   return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
 }
 
-function buildUserMessage(urlContent, { recipientName, competitors, portfolio, context }) {
-  // The prompt says "All I will put into the chat will be the URL" — so we lead with
-  // the URL and append the scraped content plus any optional inputs.
-  let msg = `${urlContent.url}\n`;
+function buildUserMessage(url, { recipientName, competitors, portfolio, context }) {
+  let msg = `${url}\n`;
 
   msg += `\nRecipient name: ${formatNames(recipientName)}\n`;
-
-  // Append scraped page content so Claude doesn't need web access
-  msg += `\n--- Scraped page content ---\n`;
-  if (urlContent.title) msg += `Page title: ${urlContent.title}\n`;
-  if (urlContent.description) msg += `Meta description: ${urlContent.description}\n`;
-  msg += `\n${urlContent.body}\n`;
-  msg += `--- End scraped content ---\n`;
 
   if (competitors) {
     msg += `\nKnown competitors: ${competitors}\n`;

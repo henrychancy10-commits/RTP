@@ -4,7 +4,6 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { fetchUrlContent } from "./src/fetch-url.js";
 import { generateEmail } from "./src/generate-email.js";
 import {
   getAccessToken,
@@ -64,9 +63,7 @@ app.post("/api/generate", async (req, res) => {
       promptFile = TEMPLATES[template].file;
     }
 
-    const urlContent = await fetchUrlContent(url);
-
-    const emailHtml = await generateEmail(urlContent, {
+    const emailHtml = await generateEmail(url, {
       recipientName: name || "[FIRST NAME]",
       competitors,
       portfolio,
@@ -75,11 +72,7 @@ app.post("/api/generate", async (req, res) => {
       promptFile,
     });
 
-    res.json({
-      email: emailHtml,
-      pageTitle: urlContent.title,
-      contentLength: urlContent.body.length,
-    });
+    res.json({ email: emailHtml });
   } catch (err) {
     console.error("GENERATE ERROR:", err.message || err);
     res.status(500).json({ error: err.message });

@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import "dotenv/config";
 import { program } from "commander";
-import { fetchUrlContent } from "./src/fetch-url.js";
 import { generateEmail } from "./src/generate-email.js";
 import {
   getAccessToken,
@@ -29,15 +28,9 @@ program.parse();
 
 async function run(opts) {
   try {
-    // 1. Fetch URL content
-    console.log(`Fetching content from: ${opts.url}`);
-    const urlContent = await fetchUrlContent(opts.url);
-    console.log(`  Title: ${urlContent.title || "(none)"}`);
-    console.log(`  Content length: ${urlContent.body.length} chars\n`);
-
-    // 2. Generate email via Claude
-    console.log("Generating email with Claude...");
-    const emailHtml = await generateEmail(urlContent, {
+    // 1. Generate email via Claude (Claude fetches + researches the URL itself)
+    console.log(`Generating email for: ${opts.url}`);
+    const emailHtml = await generateEmail(opts.url, {
       recipientName: opts.name,
       competitors: opts.competitors,
       portfolio: opts.portfolio,
