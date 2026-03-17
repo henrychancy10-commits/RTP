@@ -103,9 +103,11 @@ export async function generateEmail(url, options = {}) {
   // Send a message and handle pause_turn loops for web search.
   // Wraps each API call in a 3-minute timeout to prevent hanging.
   async function chat(messages, { tools, maxTokens = 8000, thinkingBudget = 3000 } = {}) {
+    // max_tokens must exceed thinking budget — it covers thinking + output combined
+    const totalMaxTokens = Math.max(maxTokens, thinkingBudget + maxTokens);
     const params = {
       model,
-      max_tokens: maxTokens,
+      max_tokens: totalMaxTokens,
       thinking: { type: "enabled", budget_tokens: thinkingBudget },
       system: systemMessages,
       messages,
