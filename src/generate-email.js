@@ -39,13 +39,16 @@ export function loadSystemPrompt(promptFile) {
 
 /**
  * Multi-step email generation pipeline:
- *   1. Research the company and its market
- *   2. Map the competitive ecosystem
- *   3. Write the email based on template instructions
- *   4. QA the email and produce the final version
+ *   1. Research the company
+ *   2. Research the market
+ *   3. Map the competitive ecosystem
+ *   4. Write the email based on template instructions
+ *   5. QA the email
+ *   6. Produce the final polished email
  *
- * Each step builds on the accumulated conversation history.
- * Prompt caching keeps the system prompt cheap across turns.
+ * Each step is a separate API call with focused instructions that builds
+ * on the accumulated conversation history. Prompt caching keeps the
+ * system prompt cheap across turns.
  *
  * @param {string} url - Company URL to research
  * @param {object} options
@@ -75,7 +78,7 @@ export async function generateEmail(url, options = {}) {
     {
       type: "web_search_20250305",
       name: "web_search",
-      max_uses: 10,
+      max_uses: 15,
     },
   ];
 
@@ -89,7 +92,7 @@ export async function generateEmail(url, options = {}) {
   ];
 
   // Shared helper: send a message and handle pause_turn loops for web search
-  async function chat(messages, { tools, maxTokens = 16000, thinkingBudget = 5000 } = {}) {
+  async function chat(messages, { tools, maxTokens = 16000, thinkingBudget = 8000 } = {}) {
     const params = {
       model,
       max_tokens: maxTokens,
@@ -123,32 +126,40 @@ export async function generateEmail(url, options = {}) {
   // Build running conversation history
   let messages = [];
 
-  // ── Step 1: Research the company AND its market ───────────────────
-  console.log("  Step 1/4: Researching company & market...");
+  // ── Step 1: Research the company ──────────────────────────────────
+  console.log("  Step 1/6: Researching company...");
   messages.push({
     role: "user",
     content: `Research this company thoroughly: ${url}
 
-Visit their website and gather key information: what the company does, their products/services, founding story, leadership team, recent news, funding history, and any unique value propositions.
-
-Then research the market they operate in:
-- Overall market size and growth trajectory
-- Key trends shaping this space
-- Major tailwinds and headwinds
-- Who the buyers/customers are and what drives their purchasing decisions
-- Any regulatory or macro factors that matter
-
-Be specific with data points where possible. Provide a comprehensive company profile followed by a market analysis.`,
+Visit their website and gather key information: what the company does, their products/services, founding story, leadership team, recent news, funding history, and any unique value propositions. Provide a comprehensive company profile.`,
   });
 
   let response = await chat(messages, { tools: webSearchTools });
   messages.push({ role: "assistant", content: response.content });
 
-  // ── Step 2: Map the competitive ecosystem ─────────────────────────
+  // ── Step 2: Research the market ───────────────────────────────────
+  console.log("  Step 2/6: Researching market...");
+  messages.push({
+    role: "user",
+    content: `Now research the market this company operates in. I need to understand:
+- The overall market size and growth trajectory
+- Key trends shaping this space
+- Major tailwinds and headwinds
+- Who the buyers/customers are and what drives their purchasing decisions
+- Any regulatory or macro factors that matter
+
+Be specific with data points where possible.`,
+  });
+
+  response = await chat(messages, { tools: webSearchTools });
+  messages.push({ role: "assistant", content: response.content });
+
+  // ── Step 3: Map the competitive ecosystem ─────────────────────────
   const competitorHint = competitors
     ? `\n\nI already know about these competitors: ${competitors}. Include them but also find others.`
     : "";
-  console.log("  Step 2/4: Researching competitive ecosystem...");
+  console.log("  Step 3/6: Researching competitive ecosystem...");
   messages.push({
     role: "user",
     content: `Now map out the competitive ecosystem for this company. I need:
@@ -162,7 +173,7 @@ Be specific with data points where possible. Provide a comprehensive company pro
   response = await chat(messages, { tools: webSearchTools });
   messages.push({ role: "assistant", content: response.content });
 
-  // ── Step 3: Write the email ───────────────────────────────────────
+  // ── Step 4: Write the email ───────────────────────────────────────
   const recipientLine = formatNames(recipientName);
   let writePrompt = `Based on all the research above, now write the outreach email.
 
@@ -173,14 +184,14 @@ Recipient name: ${recipientLine}
   writePrompt += `
 Follow the system prompt instructions exactly for tone, structure, and formatting. Use the research to make the email specific, insightful, and compelling — not generic. Output only the email body as clean HTML.`;
 
-  console.log("  Step 3/4: Writing email...");
+  console.log("  Step 4/6: Writing email...");
   messages.push({ role: "user", content: writePrompt });
 
-  response = await chat(messages);
+  response = await chat(messages, { thinkingBudget: 10000 });
   messages.push({ role: "assistant", content: response.content });
 
-  // ── Step 4: QA and finalize ───────────────────────────────────────
-  console.log("  Step 4/4: QA review & finalizing...");
+  // ── Step 5: QA the email ──────────────────────────────────────────
+  console.log("  Step 5/6: QA review...");
   messages.push({
     role: "user",
     content: `Review the email you just wrote against these QA criteria:
@@ -193,13 +204,52 @@ Follow the system prompt instructions exactly for tone, structure, and formattin
 6. **Call to action** — Is there a clear, natural next step?
 7. **Recipient name** — Is "${recipientLine}" used correctly in the greeting?
 
-Fix any issues and then output ONLY the final, polished email body as clean HTML — no commentary, no explanation, no code fences. Just the raw HTML email body.`,
+List every issue you find, no matter how small. If there are problems, provide a corrected version of the full email. If the email passes QA, confirm it's good.`,
   });
 
-  response = await chat(messages);
-  const finalEmail = extractText(response);
+  response = await chat(messages, { thinkingBudget: 10000 });
+  messages.push({ role: "assistant", content: response.content });
+
+  // ── Step 6: Produce the final email ───────────────────────────────
+  console.log("  Step 6/6: Finalizing...");
+  messages.push({
+    role: "user",
+    content: `Now provide the final, polished email incorporating any QA fixes. Output ONLY the email body as clean HTML — no commentary, no explanation, no code fences. Just the raw HTML email body.`,
+  });
+
+  response = await chat(messages, { maxTokens: 4096, thinkingBudget: 4000 });
+  let finalEmail = extractText(response);
+
+  // Validate output: strip code fences if model wrapped them despite instructions
+  finalEmail = stripCodeFences(finalEmail);
+
+  // If the output doesn't look like HTML, retry once with a firmer prompt
+  if (!looksLikeHtml(finalEmail)) {
+    console.log("  Output validation failed — retrying...");
+    messages.push({ role: "assistant", content: response.content });
+    messages.push({
+      role: "user",
+      content: `Your output was not clean HTML. Output ONLY raw HTML tags (<p>, <ul>, <li>, <strong>, <em>, <br>) — absolutely no markdown, no code fences, no commentary. Just the email body HTML.`,
+    });
+    response = await chat(messages, { maxTokens: 4096, thinkingBudget: 4000 });
+    finalEmail = stripCodeFences(extractText(response));
+  }
 
   return finalEmail.trim();
+}
+
+/**
+ * Remove markdown code fences that occasionally wrap the output.
+ */
+function stripCodeFences(text) {
+  return text.replace(/^```(?:html)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+}
+
+/**
+ * Quick check that the output contains at least one HTML tag.
+ */
+function looksLikeHtml(text) {
+  return /<(p|ul|li|strong|em|br)\b/i.test(text);
 }
 
 /**
