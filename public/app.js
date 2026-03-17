@@ -624,9 +624,15 @@ async function generateRow(row) {
     }),
   });
 
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Server error ${res.status}: ${text}`);
+  }
+
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let gotResult = false;
 
   while (true) {
     const { done, value } = await reader.read();
@@ -638,7 +644,13 @@ async function generateRow(row) {
 
     for (const line of lines) {
       if (!line.startsWith("data: ")) continue;
-      const event = JSON.parse(line.slice(6));
+      let event;
+      try {
+        event = JSON.parse(line.slice(6));
+      } catch (e) {
+        console.warn("Failed to parse SSE event:", line);
+        continue;
+      }
 
       if (event.type === "progress") {
         row.stepLabel = `${event.step}/${event.totalSteps}: ${event.label}`;
@@ -647,10 +659,15 @@ async function generateRow(row) {
         row.emailHtml = event.email;
         row.status = "generated";
         row.stepLabel = "";
+        gotResult = true;
       } else if (event.type === "error") {
         throw new Error(event.error);
       }
     }
+  }
+
+  if (!gotResult) {
+    throw new Error("Stream ended without producing an email");
   }
 
   updateRowStatus(row);

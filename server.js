@@ -69,6 +69,11 @@ app.post("/api/generate", async (req, res) => {
     promptFile = TEMPLATES[template].file;
   }
 
+  // Keep-alive ping every 30s so the browser doesn't close the connection
+  const keepAlive = setInterval(() => {
+    res.write(": ping\n\n");
+  }, 30000);
+
   const onProgress = ({ step, totalSteps, label }) => {
     res.write(`data: ${JSON.stringify({ type: "progress", step, totalSteps, label })}\n\n`);
   };
@@ -87,9 +92,11 @@ app.post("/api/generate", async (req, res) => {
     res.write(`data: ${JSON.stringify({ type: "done", email: emailHtml })}\n\n`);
   } catch (err) {
     console.error("GENERATE ERROR:", err.message || err);
-    res.write(`data: ${JSON.stringify({ type: "error", error: err.message })}\n\n`);
+    console.error(err.stack);
+    res.write(`data: ${JSON.stringify({ type: "error", error: err.message || "Unknown error" })}\n\n`);
   }
 
+  clearInterval(keepAlive);
   res.end();
 });
 

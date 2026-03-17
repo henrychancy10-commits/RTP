@@ -94,7 +94,8 @@ export async function generateEmail(url, options = {}) {
     },
   ];
 
-  // Send a message and handle pause_turn loops for web search
+  // Send a message and handle pause_turn loops for web search.
+  // Wraps each API call in a 3-minute timeout to prevent hanging.
   async function chat(messages, { tools, maxTokens = 8000, thinkingBudget = 3000 } = {}) {
     const params = {
       model,
@@ -105,7 +106,15 @@ export async function generateEmail(url, options = {}) {
     };
     if (tools) params.tools = tools;
 
-    let response = await client.messages.create(params);
+    const TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes per API call
+    async function callWithTimeout(p) {
+      const timer = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("API call timed out after 3 minutes")), TIMEOUT_MS)
+      );
+      return Promise.race([p, timer]);
+    }
+
+    let response = await callWithTimeout(client.messages.create(params));
 
     while (response.stop_reason === "pause_turn") {
       console.log("    Web search in progress, continuing...");
@@ -113,7 +122,7 @@ export async function generateEmail(url, options = {}) {
         ...messages,
         { role: "assistant", content: response.content },
       ];
-      response = await client.messages.create({ ...params, messages });
+      response = await callWithTimeout(client.messages.create({ ...params, messages }));
     }
 
     return response;
