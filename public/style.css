@@ -289,6 +289,7 @@ tr:hover td {
 .col-portfolio { min-width: 140px; }
 .col-context { min-width: 140px; }
 .col-copy { width: 70px; text-align: center; }
+.col-outlook { width: 80px; text-align: center; }
 .col-preview { width: 70px; text-align: center; }
 .col-actions { width: 36px; }
 
@@ -385,6 +386,17 @@ td input::placeholder {
   background: #d1f2d9 !important;
   color: #1a7f37 !important;
   border-color: #1a7f37 !important;
+}
+
+/* Outlook button */
+.btn-outlook {
+  background: #0078d4;
+  color: #fff;
+  border: none;
+}
+
+.btn-outlook:hover:not(:disabled) {
+  background: #106ebe;
 }
 
 /* Preview button */

@@ -28,6 +28,7 @@ const modalCopyBtn = document.getElementById("modalCopyBtn");
 const gmailStatusText = document.getElementById("gmailStatusText");
 const gmailConnectLink = document.getElementById("gmailConnectLink");
 const gmailStatusDiv = document.getElementById("gmailStatus");
+const modalOutlookBtn = document.getElementById("modalOutlookBtn");
 const statusMessage = document.getElementById("statusMessage");
 
 // --- Init ---
@@ -154,6 +155,7 @@ function renderTable() {
       <td><input type="text" class="field-portfolio" placeholder="EnergyCAP..." value="${esc(row.portfolio)}"></td>
       <td><input type="text" class="field-context" placeholder="Met at SaaStr" value="${esc(row.context)}"></td>
       <td class="col-copy">${row.emailHtml ? `<button class="btn btn-small btn-copy copy-btn" data-id="${row.id}">Copy</button>` : ""}</td>
+      <td class="col-outlook">${row.emailHtml ? `<button class="btn btn-small btn-outlook outlook-btn" data-id="${row.id}">Open</button>` : ""}</td>
       <td class="col-preview">${row.emailHtml ? `<span class="preview-link" data-id="${row.id}">View</span>` : ""}</td>
       <td class="col-actions"><button class="btn-icon delete-row" data-id="${row.id}" title="Remove row">&times;</button></td>
     </tr>
@@ -170,6 +172,13 @@ function renderTable() {
 
   tableBody.querySelectorAll(".copy-btn").forEach((btn) => {
     btn.addEventListener("click", () => copyRichText(Number(btn.dataset.id), btn));
+  });
+
+  tableBody.querySelectorAll(".outlook-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      syncAllRows();
+      downloadEml(Number(btn.dataset.id));
+    });
   });
 
   tableBody.querySelectorAll(".row-check").forEach((cb, i) => {
@@ -769,6 +778,15 @@ function updateRowStatus(row) {
     copyTd.querySelector(".copy-btn").addEventListener("click", (e) => copyRichText(row.id, e.target));
   }
 
+  const outlookTd = tr.querySelector(".col-outlook");
+  if (row.emailHtml && outlookTd) {
+    outlookTd.innerHTML = `<button class="btn btn-small btn-outlook outlook-btn" data-id="${row.id}">Open</button>`;
+    outlookTd.querySelector(".outlook-btn").addEventListener("click", () => {
+      syncAllRows();
+      downloadEml(row.id);
+    });
+  }
+
   const previewTd = tr.querySelector(".col-preview");
   if (row.emailHtml) {
     previewTd.innerHTML = `<span class="preview-link" data-id="${row.id}">View</span>`;
@@ -945,6 +963,73 @@ modalSendBtn.addEventListener("click", async () => {
     modalSendBtn.textContent = "Send Now";
   }
 });
+
+// --- Open in Outlook (.eml) ---
+modalOutlookBtn.addEventListener("click", () => {
+  const row = rows.find((r) => r.id === currentPreviewRowId);
+  if (!row) return;
+  syncRowFromDom(row);
+  downloadEml(row.id);
+});
+
+function downloadEml(rowId) {
+  const row = rows.find((r) => r.id === rowId);
+  if (!row || !row.emailHtml) return;
+
+  const to = row.to || "";
+  const subject = row.subject || "[subject line]";
+  const htmlBody = prepareForOutlook(row.emailHtml);
+
+  // Build RFC 2822 .eml with MIME HTML body
+  const boundary = "----=_RTPBoundary_" + Date.now();
+  const emlParts = [
+    `MIME-Version: 1.0`,
+    `To: ${to}`,
+    `Subject: ${encodeRFC2047(subject)}`,
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    `X-Unsent: 1`,
+    ``,
+    `--${boundary}`,
+    `Content-Type: text/plain; charset=UTF-8`,
+    `Content-Transfer-Encoding: quoted-printable`,
+    ``,
+    htmlToPlainText(row.emailHtml),
+    ``,
+    `--${boundary}`,
+    `Content-Type: text/html; charset=UTF-8`,
+    `Content-Transfer-Encoding: quoted-printable`,
+    ``,
+    quotedPrintableEncode(htmlBody),
+    ``,
+    `--${boundary}--`,
+  ];
+
+  const emlContent = emlParts.join("\r\n");
+  const filename = `${(row.name || row.to || "email").replace(/[^a-zA-Z0-9]/g, "_")}.eml`;
+  downloadFile(filename, emlContent, "message/rfc822");
+  showStatus("EML downloaded — double-click to open in Outlook.", "success");
+}
+
+// RFC 2047 encode subject for non-ASCII characters
+function encodeRFC2047(text) {
+  if (/^[\x20-\x7E]+$/.test(text)) return text;
+  const encoded = new TextEncoder().encode(text);
+  const base64 = btoa(String.fromCharCode(...encoded));
+  return `=?UTF-8?B?${base64}?=`;
+}
+
+// Quoted-printable encoding for email body
+function quotedPrintableEncode(text) {
+  return text.replace(/[^\r\n\x20-\x3C\x3E-\x7E]/g, (ch) => {
+    const code = ch.charCodeAt(0);
+    if (code > 255) {
+      // Encode multi-byte characters as UTF-8 bytes
+      const bytes = new TextEncoder().encode(ch);
+      return Array.from(bytes).map((b) => "=" + b.toString(16).toUpperCase().padStart(2, "0")).join("");
+    }
+    return "=" + code.toString(16).toUpperCase().padStart(2, "0");
+  });
+}
 
 // --- Status messages ---
 function showStatus(message, type) {
