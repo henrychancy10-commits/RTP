@@ -235,6 +235,14 @@ h1 {
   color: #ff3b30;
 }
 
+.btn-icon.regen-row:hover {
+  color: #0071e3;
+}
+
+.col-actions {
+  white-space: nowrap;
+}
+
 /* Table */
 .table-wrapper {
   background: #fff;
@@ -280,7 +288,7 @@ tr:hover td {
 
 /* Column widths */
 .col-check { width: 36px; text-align: center; }
-.col-status { width: 80px; }
+.col-status { width: 140px; }
 .col-url { min-width: 180px; }
 .col-name { min-width: 120px; }
 .col-email { min-width: 160px; }

@@ -59,6 +59,7 @@ export function loadSystemPrompt(promptFile) {
  * @param {string} [options.context] - Additional context (intro source, connection, angle)
  * @param {string} [options.model] - Claude model to use
  * @param {string} [options.promptFile] - Path to a file containing the system prompt
+ * @param {function} [options.onProgress] - Callback for step progress: ({ step, totalSteps, label })
  * @returns {Promise<string>} Generated email HTML body
  */
 export async function generateEmail(url, options = {}) {
@@ -69,7 +70,13 @@ export async function generateEmail(url, options = {}) {
     context = "",
     model = process.env.CLAUDE_MODEL || "claude-sonnet-4-6",
     promptFile,
+    onProgress,
   } = options;
+
+  function reportProgress(step, label) {
+    console.log(`  Step ${step}/7: ${label}`);
+    if (onProgress) onProgress({ step, totalSteps: 7, label });
+  }
 
   const { prompt: systemPrompt, source: promptSource } = loadSystemPrompt(promptFile);
   console.log(`  Using prompt from: ${promptSource}`);
@@ -129,7 +136,7 @@ export async function generateEmail(url, options = {}) {
   const recipientLine = formatNames(recipientName);
 
   // ── Step 1: Research the recipient ────────────────────────────────
-  console.log("  Step 1/7: Researching recipient...");
+  reportProgress(1, "Researching recipient...");
   messages.push({
     role: "user",
     content: `Research the person named "${recipientLine}" who works at or is associated with this company: ${url}
@@ -149,7 +156,7 @@ If you can't find much, note what you do find and we'll work with it. Do NOT mak
   messages.push({ role: "assistant", content: response.content });
 
   // ── Step 2: Research the company ──────────────────────────────────
-  console.log("  Step 2/7: Researching company...");
+  reportProgress(2, "Researching company...");
   messages.push({
     role: "user",
     content: `Now research this company thoroughly: ${url}
@@ -161,7 +168,7 @@ Visit their website and gather key information: what the company does, their pro
   messages.push({ role: "assistant", content: response.content });
 
   // ── Step 3: Research the market ───────────────────────────────────
-  console.log("  Step 3/7: Researching market...");
+  reportProgress(3, "Researching market...");
   messages.push({
     role: "user",
     content: `Now research the market this company operates in. I need to understand:
@@ -181,7 +188,7 @@ Be specific with data points where possible.`,
   const competitorHint = competitors
     ? `\n\nI already know about these competitors: ${competitors}. Include them but also find others.`
     : "";
-  console.log("  Step 4/7: Researching competitive ecosystem...");
+  reportProgress(4, "Researching competitors...");
   messages.push({
     role: "user",
     content: `Now map out the competitive ecosystem for this company. I need:
@@ -205,14 +212,14 @@ Recipient name: ${recipientLine}
   writePrompt += `
 Follow the system prompt instructions exactly for tone, structure, and formatting. Use the research to make the email specific, insightful, and compelling — not generic. Personalize the email to the recipient based on what you learned about them. Output only the email body as clean HTML.`;
 
-  console.log("  Step 5/7: Writing email...");
+  reportProgress(5, "Writing email...");
   messages.push({ role: "user", content: writePrompt });
 
   response = await chat(messages, { thinkingBudget: 10000 });
   messages.push({ role: "assistant", content: response.content });
 
   // ── Step 6: QA the email ──────────────────────────────────────────
-  console.log("  Step 6/7: QA review...");
+  reportProgress(6, "QA review...");
   messages.push({
     role: "user",
     content: `Review the email you just wrote against these QA criteria:
@@ -233,7 +240,7 @@ List every issue you find, no matter how small. If there are problems, provide a
   messages.push({ role: "assistant", content: response.content });
 
   // ── Step 7: Produce the final email ───────────────────────────────
-  console.log("  Step 7/7: Finalizing...");
+  reportProgress(7, "Finalizing...");
   messages.push({
     role: "user",
     content: `Now provide the final, polished email incorporating any QA fixes. Output ONLY the email body as clean HTML — no commentary, no explanation, no code fences. Just the raw HTML email body.`,
@@ -247,7 +254,7 @@ List every issue you find, no matter how small. If there are problems, provide a
 
   // If the output doesn't look like HTML, retry once with a firmer prompt
   if (!looksLikeHtml(finalEmail)) {
-    console.log("  Output validation failed — retrying...");
+    console.log("    Output validation failed — retrying...");
     messages.push({ role: "assistant", content: response.content });
     messages.push({
       role: "user",

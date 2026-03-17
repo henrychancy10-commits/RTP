@@ -104,6 +104,7 @@ function createRowData(data = {}) {
     portfolio: data.portfolio || "",
     context: data.context || "",
     status: "pending",
+    stepLabel: "",
     emailHtml: "",
     error: "",
     selected: false,
@@ -146,7 +147,7 @@ function renderTable() {
   tableBody.innerHTML = rows.map((row) => `
     <tr data-id="${row.id}">
       <td class="col-check"><input type="checkbox" class="row-check" ${row.selected ? "checked" : ""}></td>
-      <td class="col-status"><span class="status-badge status-${row.status}">${formatStatus(row.status)}</span></td>
+      <td class="col-status"><span class="status-badge status-${row.status}" title="${esc(row.error || row.stepLabel)}">${row.status === "generating" && row.stepLabel ? esc(row.stepLabel) : formatStatus(row.status)}</span></td>
       <td><input type="text" class="field-url" placeholder="https://company.com" value="${esc(row.url)}"></td>
       <td><input type="text" class="field-name" placeholder="John; Jane" value="${esc(row.name)}"></td>
       <td><input type="email" class="field-to" placeholder="john@co.com" value="${esc(row.to)}"></td>
@@ -157,13 +158,17 @@ function renderTable() {
       <td class="col-copy">${row.emailHtml ? `<button class="btn btn-small btn-copy copy-btn" data-id="${row.id}">Copy</button>` : ""}</td>
       <td class="col-outlook">${row.emailHtml ? `<button class="btn btn-small btn-outlook outlook-btn" data-id="${row.id}">Open</button>` : ""}</td>
       <td class="col-preview">${row.emailHtml ? `<span class="preview-link" data-id="${row.id}">View</span>` : ""}</td>
-      <td class="col-actions"><button class="btn-icon delete-row" data-id="${row.id}" title="Remove row">&times;</button></td>
+      <td class="col-actions">${row.status !== "pending" && row.status !== "generating" ? `<button class="btn-icon regen-row" data-id="${row.id}" title="Regenerate">&#x21bb;</button>` : ""}<button class="btn-icon delete-row" data-id="${row.id}" title="Remove row">&times;</button></td>
     </tr>
   `).join("");
 
   // Rebind events
   tableBody.querySelectorAll(".delete-row").forEach((btn) => {
     btn.addEventListener("click", () => removeRow(Number(btn.dataset.id)));
+  });
+
+  tableBody.querySelectorAll(".regen-row").forEach((btn) => {
+    btn.addEventListener("click", () => regenerateRow(Number(btn.dataset.id)));
   });
 
   tableBody.querySelectorAll(".preview-link").forEach((link) => {
@@ -599,14 +604,87 @@ function downloadFile(filename, content, type) {
   URL.revokeObjectURL(url);
 }
 
+// --- Generate a single row via SSE ---
+async function generateRow(row) {
+  row.status = "generating";
+  row.stepLabel = "";
+  row.error = "";
+  updateRowStatus(row);
+
+  const res = await fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url: row.url,
+      name: row.name,
+      competitors: row.competitors,
+      portfolio: row.portfolio,
+      context: row.context,
+      template: selectedTemplate,
+    }),
+  });
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop(); // keep incomplete line in buffer
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const event = JSON.parse(line.slice(6));
+
+      if (event.type === "progress") {
+        row.stepLabel = `${event.step}/${event.totalSteps}: ${event.label}`;
+        updateRowStatus(row);
+      } else if (event.type === "done") {
+        row.emailHtml = event.email;
+        row.status = "generated";
+        row.stepLabel = "";
+      } else if (event.type === "error") {
+        throw new Error(event.error);
+      }
+    }
+  }
+
+  updateRowStatus(row);
+}
+
+// --- Regenerate a single row ---
+async function regenerateRow(rowId) {
+  const row = rows.find((r) => r.id === rowId);
+  if (!row || row.status === "generating") return;
+  syncRowFromDom(row);
+
+  if (!row.url) {
+    showStatus("Fill in the Company URL before regenerating.", "error");
+    return;
+  }
+
+  try {
+    await generateRow(row);
+    showStatus("Email regenerated.", "success");
+  } catch (err) {
+    row.status = "error";
+    row.error = err.message;
+    row.stepLabel = "";
+    updateRowStatus(row);
+    showStatus(`Regeneration failed: ${err.message}`, "error");
+  }
+  updateActionButtons();
+}
+
 // --- Generate All ---
 generateAllBtn.addEventListener("click", async () => {
   syncAllRows();
 
-  console.log("All rows after sync:", rows.map(r => ({ id: r.id, url: r.url, name: r.name })));
-
   const toProcess = getSelectedOrAll().filter((r) => r.url && r.status !== "generating");
-  console.log("Rows to process:", toProcess.length);
 
   if (toProcess.length === 0) {
     showStatus("No valid rows to process. Fill in at least the Company URL.", "error");
@@ -621,38 +699,18 @@ generateAllBtn.addEventListener("click", async () => {
   let errors = 0;
 
   for (const row of toProcess) {
-    row.status = "generating";
-    row.error = "";
-    updateRowStatus(row);
     progressText.textContent = `${completed + 1} of ${toProcess.length}...`;
 
     try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: row.url,
-          name: row.name,
-          competitors: row.competitors,
-          portfolio: row.portfolio,
-          context: row.context,
-          template: selectedTemplate,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
-      row.emailHtml = data.email;
-      row.status = "generated";
+      await generateRow(row);
       completed++;
     } catch (err) {
       row.status = "error";
       row.error = err.message;
+      row.stepLabel = "";
+      updateRowStatus(row);
       errors++;
     }
-
-    updateRowStatus(row);
   }
 
   progressText.textContent = `Done: ${completed} generated, ${errors} errors`;
@@ -770,7 +828,8 @@ function updateRowStatus(row) {
   if (!tr) return;
 
   const statusTd = tr.querySelector(".col-status");
-  statusTd.innerHTML = `<span class="status-badge status-${row.status}" title="${esc(row.error)}">${formatStatus(row.status)}</span>`;
+  const statusText = row.status === "generating" && row.stepLabel ? esc(row.stepLabel) : formatStatus(row.status);
+  statusTd.innerHTML = `<span class="status-badge status-${row.status}" title="${esc(row.error || row.stepLabel)}">${statusText}</span>`;
 
   const copyTd = tr.querySelector(".col-copy");
   if (row.emailHtml && copyTd) {

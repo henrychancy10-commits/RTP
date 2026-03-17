@@ -48,21 +48,32 @@ app.get("/api/templates", (req, res) => {
   res.json(list);
 });
 
-// Generate email from URL
+// Generate email from URL (SSE stream for step progress)
 app.post("/api/generate", async (req, res) => {
+  const { url, name, competitors, portfolio, context, model, template } = req.body;
+
+  if (!url) {
+    return res.status(400).json({ error: "URL is required." });
+  }
+
+  // Set up SSE headers
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+
+  // Resolve prompt file from template slug
+  let promptFile;
+  if (template && TEMPLATES[template]) {
+    promptFile = TEMPLATES[template].file;
+  }
+
+  const onProgress = ({ step, totalSteps, label }) => {
+    res.write(`data: ${JSON.stringify({ type: "progress", step, totalSteps, label })}\n\n`);
+  };
+
   try {
-    const { url, name, competitors, portfolio, context, model, template } = req.body;
-
-    if (!url) {
-      return res.status(400).json({ error: "URL is required." });
-    }
-
-    // Resolve prompt file from template slug
-    let promptFile;
-    if (template && TEMPLATES[template]) {
-      promptFile = TEMPLATES[template].file;
-    }
-
     const emailHtml = await generateEmail(url, {
       recipientName: name || "[FIRST NAME]",
       competitors,
@@ -70,13 +81,16 @@ app.post("/api/generate", async (req, res) => {
       context,
       model,
       promptFile,
+      onProgress,
     });
 
-    res.json({ email: emailHtml });
+    res.write(`data: ${JSON.stringify({ type: "done", email: emailHtml })}\n\n`);
   } catch (err) {
     console.error("GENERATE ERROR:", err.message || err);
-    res.status(500).json({ error: err.message });
+    res.write(`data: ${JSON.stringify({ type: "error", error: err.message })}\n\n`);
   }
+
+  res.end();
 });
 
 // --- Gmail routes ---
