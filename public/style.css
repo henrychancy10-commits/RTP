@@ -6,8 +6,8 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
-  background: #111;
-  color: #ececec;
+  background: #fafafa;
+  color: #1a1a1a;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -41,12 +41,12 @@ header {
 h1 {
   font-size: 22px;
   font-weight: 600;
-  color: #fff;
+  color: #111;
   letter-spacing: -0.4px;
 }
 
 .subtitle {
-  color: #666;
+  color: #888;
   font-size: 13px;
   margin-top: 3px;
   font-weight: 400;
@@ -59,31 +59,31 @@ h1 {
   gap: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: #999;
+  color: #666;
 }
 
 .template-selector select {
   padding: 7px 12px;
-  border: 1px solid #282828;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
   font-size: 13px;
   font-family: inherit;
   font-weight: 500;
-  background: #1a1a1a;
-  color: #ececec;
+  background: #fff;
+  color: #1a1a1a;
   cursor: pointer;
   min-width: 200px;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .template-selector select:hover {
-  border-color: #333;
+  border-color: #ccc;
 }
 
 .template-selector select:focus {
   outline: none;
-  border-color: #555;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+  border-color: #999;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
 }
 
 /* ---- Toolbar ---- */
@@ -95,9 +95,10 @@ h1 {
   gap: 10px;
   margin-bottom: 16px;
   padding: 10px 14px;
-  background: #1a1a1a;
-  border: 1px solid #222;
+  background: #fff;
+  border: 1px solid #e8e8e8;
   border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .toolbar-left, .toolbar-right {
@@ -109,7 +110,7 @@ h1 {
 
 .progress-text {
   font-size: 13px;
-  color: #666;
+  color: #888;
   font-weight: 500;
 }
 
@@ -145,21 +146,21 @@ h1 {
 }
 
 .btn-primary {
-  background: #fff;
-  color: #111;
+  background: #111;
+  color: #fff;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #e0e0e0;
+  background: #333;
 }
 
 .btn-secondary {
-  background: #333;
-  color: #ececec;
+  background: #f0f0f0;
+  color: #333;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #404040;
+  background: #e4e4e4;
 }
 
 .btn-danger {
@@ -168,36 +169,36 @@ h1 {
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #f26467;
+  background: #d93036;
 }
 
 .btn-outline {
   background: transparent;
-  color: #999;
-  border: 1px solid #282828;
+  color: #666;
+  border: 1px solid #ddd;
 }
 
 .btn-outline:hover:not(:disabled) {
-  color: #ccc;
-  border-color: #383838;
-  background: rgba(255, 255, 255, 0.03);
+  color: #333;
+  border-color: #bbb;
+  background: rgba(0, 0, 0, 0.02);
 }
 
 .btn-connect {
-  background: #fff;
-  color: #111;
+  background: #111;
+  color: #fff;
   text-decoration: none;
 }
 
 .btn-connect:hover {
-  background: #e0e0e0;
+  background: #333;
 }
 
 .btn-icon {
   padding: 4px 8px;
   background: none;
   border: none;
-  color: #444;
+  color: #aaa;
   cursor: pointer;
   font-size: 16px;
   border-radius: 5px;
@@ -205,12 +206,12 @@ h1 {
 }
 
 .btn-icon:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.04);
   color: #e5484d;
 }
 
 .btn-icon.regen-row:hover {
-  color: #fff;
+  color: #111;
 }
 
 .col-actions {
@@ -219,10 +220,11 @@ h1 {
 
 /* ---- Table ---- */
 .table-wrapper {
-  background: #161616;
-  border: 1px solid #222;
+  background: #fff;
+  border: 1px solid #e8e8e8;
   border-radius: 10px;
   overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 table {
@@ -238,26 +240,26 @@ thead {
 }
 
 th {
-  background: #1a1a1a;
+  background: #f7f7f7;
   padding: 9px 8px;
   text-align: left;
   font-size: 11px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: #555;
-  border-bottom: 1px solid #222;
+  color: #888;
+  border-bottom: 1px solid #e8e8e8;
   white-space: nowrap;
 }
 
 td {
   padding: 4px 4px;
-  border-bottom: 1px solid #1e1e1e;
+  border-bottom: 1px solid #f0f0f0;
   vertical-align: top;
 }
 
 tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: #f9f9fb;
 }
 
 /* Column widths */
@@ -286,23 +288,23 @@ td input[type="email"] {
   font-size: 13px;
   font-family: inherit;
   background: transparent;
-  color: #ececec;
+  color: #1a1a1a;
   transition: all 0.12s ease;
 }
 
 td input:hover {
-  border-color: #282828;
+  border-color: #ddd;
 }
 
 td input:focus {
   outline: none;
-  border-color: #444;
-  background: #111;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
+  border-color: #bbb;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
 }
 
 td input::placeholder {
-  color: #333;
+  color: #ccc;
 }
 
 /* ---- Status badges ---- */
@@ -315,79 +317,79 @@ td input::placeholder {
 }
 
 .status-pending {
-  background: #1e1e1e;
-  color: #555;
+  background: #f3f3f3;
+  color: #999;
 }
 
 .status-generating {
-  background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.08);
+  color: #3b82f6;
   animation: pulse-badge 2s ease-in-out infinite;
 }
 
 @keyframes pulse-badge {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50% { opacity: 0.5; }
 }
 
 .status-generated {
-  background: rgba(34, 197, 94, 0.1);
-  color: #4ade80;
+  background: rgba(22, 163, 74, 0.08);
+  color: #16a34a;
 }
 
 .status-drafting {
-  background: rgba(234, 179, 8, 0.1);
-  color: #facc15;
+  background: rgba(202, 138, 4, 0.08);
+  color: #ca8a04;
 }
 
 .status-drafted {
-  background: rgba(34, 197, 94, 0.1);
-  color: #4ade80;
+  background: rgba(22, 163, 74, 0.08);
+  color: #16a34a;
 }
 
 .status-sending {
-  background: rgba(234, 179, 8, 0.1);
-  color: #facc15;
+  background: rgba(202, 138, 4, 0.08);
+  color: #ca8a04;
 }
 
 .status-sent {
-  background: rgba(34, 197, 94, 0.1);
-  color: #4ade80;
+  background: rgba(22, 163, 74, 0.08);
+  color: #16a34a;
 }
 
 .status-error {
-  background: rgba(229, 72, 77, 0.1);
-  color: #f87171;
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
 }
 
 /* Copy button */
 .btn-copy {
-  background: #1e1e1e;
-  color: #999;
-  border: 1px solid #282828;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
 }
 
 .btn-copy:hover:not(:disabled) {
-  border-color: #383838;
-  color: #ccc;
+  border-color: #ccc;
+  color: #333;
 }
 
 .btn-copied {
-  background: rgba(34, 197, 94, 0.1) !important;
-  color: #4ade80 !important;
-  border-color: rgba(34, 197, 94, 0.25) !important;
+  background: rgba(22, 163, 74, 0.08) !important;
+  color: #16a34a !important;
+  border-color: rgba(22, 163, 74, 0.2) !important;
 }
 
 /* Outlook button */
 .btn-outlook {
-  background: #222;
-  color: #999;
-  border: 1px solid #282828;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
 }
 
 .btn-outlook:hover:not(:disabled) {
-  border-color: #383838;
-  color: #ccc;
+  border-color: #ccc;
+  color: #333;
 }
 
 /* Preview button */
@@ -401,7 +403,7 @@ td input::placeholder {
 }
 
 .preview-link:hover {
-  color: #fff;
+  color: #111;
   text-decoration: underline;
 }
 
@@ -412,9 +414,9 @@ td input::placeholder {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -422,14 +424,14 @@ td input::placeholder {
 }
 
 .modal-content {
-  background: #1a1a1a;
-  border: 1px solid #282828;
+  background: #fff;
+  border: 1px solid #e0e0e0;
   border-radius: 12px;
   width: 90%;
   max-width: 700px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 .modal-header {
@@ -442,7 +444,7 @@ td input::placeholder {
 .modal-header h2 {
   font-size: 16px;
   font-weight: 600;
-  color: #fff;
+  color: #111;
   text-transform: none;
   letter-spacing: -0.2px;
 }
@@ -451,7 +453,7 @@ td input::placeholder {
   display: flex;
   gap: 8px;
   padding: 16px 24px 20px;
-  border-top: 1px solid #222;
+  border-top: 1px solid #f0f0f0;
 }
 
 .email-preview {
@@ -459,7 +461,7 @@ td input::placeholder {
   font-family: Calibri, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;
-  color: #ccc;
+  color: #333;
 }
 
 .email-preview p {
@@ -477,20 +479,20 @@ td input::placeholder {
 }
 
 .status-message.status-success {
-  background: rgba(34, 197, 94, 0.06);
-  color: #4ade80;
-  border-color: rgba(34, 197, 94, 0.15);
+  background: rgba(22, 163, 74, 0.05);
+  color: #16a34a;
+  border-color: rgba(22, 163, 74, 0.15);
 }
 
 .status-message.status-error {
-  background: rgba(229, 72, 77, 0.06);
-  color: #f87171;
-  border-color: rgba(229, 72, 77, 0.15);
+  background: rgba(220, 38, 38, 0.05);
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.15);
 }
 
 .status-message.status-info {
-  background: rgba(59, 130, 246, 0.06);
-  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.05);
+  color: #3b82f6;
   border-color: rgba(59, 130, 246, 0.15);
 }
 
@@ -500,12 +502,12 @@ th input[type="checkbox"] {
   width: 15px;
   height: 15px;
   cursor: pointer;
-  accent-color: #fff;
+  accent-color: #111;
 }
 
 /* Cell selection (Excel-style drag) */
 td input.cell-selected {
-  background: rgba(59, 130, 246, 0.08) !important;
+  background: rgba(59, 130, 246, 0.06) !important;
   border-color: #3b82f6 !important;
   box-shadow: inset 0 0 0 1px #3b82f6;
 }
@@ -530,12 +532,12 @@ table.selecting td input {
 }
 
 .table-wrapper::-webkit-scrollbar-thumb {
-  background: #282828;
+  background: #ddd;
   border-radius: 3px;
 }
 
 .table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #383838;
+  background: #ccc;
 }
 
 /* ---- Responsive ---- */
