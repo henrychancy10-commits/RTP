@@ -30,7 +30,7 @@ async function run(opts) {
   try {
     // 1. Generate email via Claude (Claude fetches + researches the URL itself)
     console.log(`Generating email for: ${opts.url}`);
-    const emailHtml = await generateEmail(opts.url, {
+    const result = await generateEmail(opts.url, {
       recipientName: opts.name,
       competitors: opts.competitors,
       portfolio: opts.portfolio,
@@ -38,7 +38,8 @@ async function run(opts) {
       model: opts.model,
       promptFile: opts.promptFile,
     });
-    console.log("Email generated.\n");
+    const emailHtml = result.email;
+    console.log(`Email generated in ${(result.usage.durationMs / 1000).toFixed(1)}s — $${result.usage.cost.toFixed(3)}\n`);
 
     // 3. Preview mode — just print and exit
     if (opts.preview) {

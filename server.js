@@ -87,7 +87,7 @@ app.post("/api/generate", async (req, res) => {
   };
 
   try {
-    const emailHtml = await generateEmail(url, {
+    const result = await generateEmail(url, {
       recipientName: name || "[FIRST NAME]",
       competitors,
       portfolio,
@@ -97,7 +97,7 @@ app.post("/api/generate", async (req, res) => {
       onProgress,
     });
 
-    res.write(`data: ${JSON.stringify({ type: "done", email: emailHtml })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: "done", email: result.email, usage: result.usage })}\n\n`);
   } catch (err) {
     const msg = err.message || String(err);
     console.error("GENERATE ERROR:", msg);

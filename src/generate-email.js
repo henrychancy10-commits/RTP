@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { fetchUrlContent } from "./fetch-url.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_PROMPT_PATH = path.join(__dirname, "..", "prompt.txt");
@@ -68,7 +69,10 @@ export async function generateEmail(url, options = {}) {
     onProgress,
   } = options;
 
-  const TOTAL_STEPS = 3;
+  const startTime = Date.now();
+  const tokenUsage = { input: 0, output: 0 };
+
+  const TOTAL_STEPS = 5;
   function reportProgress(step, label) {
     console.log(`  Step ${step}/${TOTAL_STEPS}: ${label}`);
     if (onProgress) onProgress({ step, totalSteps: TOTAL_STEPS, label });
@@ -99,6 +103,13 @@ export async function generateEmail(url, options = {}) {
       cache_control: { type: "ephemeral" },
     },
   ];
+
+  function trackTokens(response) {
+    if (response.usage) {
+      tokenUsage.input += response.usage.input_tokens || 0;
+      tokenUsage.output += response.usage.output_tokens || 0;
+    }
+  }
 
   // Send a message and handle pause_turn loops for web search.
   // Wraps each API call in a 3-minute timeout to prevent hanging.
@@ -133,6 +144,7 @@ export async function generateEmail(url, options = {}) {
       }
       throw err;
     }
+    trackTokens(response);
 
     while (response.stop_reason === "pause_turn") {
       console.log("    Web search in progress, continuing...");
@@ -149,6 +161,7 @@ export async function generateEmail(url, options = {}) {
         }
         throw err;
       }
+      trackTokens(response);
     }
 
     return response;
@@ -166,9 +179,21 @@ export async function generateEmail(url, options = {}) {
     ? `\n\nI already know about these competitors: ${competitors}. Include them but also find others.`
     : "";
 
-  // ── Step 1: Research ────────────────────────────────────────────────
+  // ── Step 1: Scrape website ──────────────────────────────────────────
+  reportProgress(1, "Scraping website...");
+
+  let siteContent = "";
+  try {
+    const scraped = await fetchUrlContent(url);
+    siteContent = `**${scraped.title}**\n${scraped.description}\n\n${scraped.body}`;
+    console.log(`    Scraped ${scraped.body.length} chars from ${url}`);
+  } catch (err) {
+    console.log(`    Scrape failed (${err.message}), will rely on web search`);
+  }
+
+  // ── Step 2: Research recipient + company (parallel) ─────────────────
   const hasRecipient = recipientName && recipientName !== "[FIRST NAME]";
-  reportProgress(1, hasRecipient ? "Researching (parallel)..." : "Researching company...");
+  reportProgress(2, hasRecipient ? "Researching recipient & company..." : "Researching company...");
 
   const researchPromises = [];
 
@@ -177,21 +202,23 @@ export async function generateEmail(url, options = {}) {
     researchPromises.push(
       chat(
         [{ role: "user", content: `Research the person named "${recipientLine}" who works at or is associated with this company: ${url}
-
+${siteContent ? `\nHere is content from their website for context:\n${siteContent.slice(0, 2000)}\n` : ""}
 Find key facts only — their current role, brief professional background, and anything notable they've said or done publicly. Keep it concise. Do NOT make anything up.` }],
         { tools: webSearchTools }
       )
     );
   }
 
-  // Company + market + competitors
+  // Company + market research — enriched with scraped content
   researchPromises.push(
     chat(
-      [{ role: "user", content: `Research the company at ${url}. In a single concise report, cover:
+      [{ role: "user", content: `Research the company at ${url}.
+${siteContent ? `\nHere is content scraped from their website:\n${siteContent.slice(0, 4000)}\n` : ""}
+In a single concise report, cover:
 
-1. **Company**: What they do, key products/services, recent news, funding
-2. **Market**: Market size, key trends, tailwinds
-3. **Competitors**: Main competitors and how this company differentiates${competitorHint}
+1. **Company**: What they do, key products/services, recent news, funding, key customers
+2. **Market**: Market size, key trends, tailwinds, regulatory drivers
+3. **Business model**: How they make money, pricing, go-to-market
 
 Be concise — bullet points are fine. Focus on what's useful for writing a personalized outreach email.` }],
       { tools: webSearchTools }
@@ -209,14 +236,36 @@ Be concise — bullet points are fine. Focus on what's useful for writing a pers
     companyResearch = extractText(results[0]);
   }
 
-  // ── Step 2: Write the email ────────────────────────────────────────
-  reportProgress(2, "Writing email...");
+  // ── Step 3: Competitor deep-dive ────────────────────────────────────
+  reportProgress(3, "Researching competitors...");
 
-  let writePrompt = `Here is research I've gathered. Use it to write a personalized outreach email.
+  const competitorResponse = await chat(
+    [{ role: "user", content: `Based on what I know about ${url}, do a focused competitor analysis.
+${siteContent ? `\nWebsite content:\n${siteContent.slice(0, 2000)}\n` : ""}
+${companyResearch ? `\nCompany research so far:\n${companyResearch.slice(0, 2000)}\n` : ""}${competitorHint}
+
+Research and report on:
+1. **Direct competitors** — companies solving the same problem, with funding amounts, employee counts, and key differentiators
+2. **Recent M&A** — any acquisitions or mergers in this space in the last 2 years
+3. **Market positioning** — how does ${url} compare? What's their unique advantage?
+4. **Gaps and opportunities** — what are competitors missing that this company could exploit?
+
+Be specific with company names, funding rounds, and facts. Keep it concise.` }],
+    { tools: webSearchTools }
+  );
+  const competitorResearch = extractText(competitorResponse);
+
+  // ── Step 4: Write the email ─────────────────────────────────────────
+  reportProgress(4, "Writing email...");
+
+  let writePrompt = `Here is comprehensive research I've gathered. Use ALL of it to write a deeply personalized outreach email.
 ${recipientResearch ? `\n## Recipient Research\n${recipientResearch}\n` : ""}
-## Company, Market & Competitive Research
+## Company & Market Research
 ${companyResearch}
 
+## Competitive Landscape
+${competitorResearch}
+${siteContent ? `\n## Website Content (direct from their site)\n${siteContent.slice(0, 3000)}\n` : ""}
 ---
 
 Now write the outreach email.
@@ -232,8 +281,8 @@ Follow the system prompt instructions exactly for tone, structure, and formattin
   let response = await chat(messages, { thinkingBudget: 10000 });
   messages.push({ role: "assistant", content: response.content });
 
-  // ── Step 3: QA + Finalize ──────────────────────────────────────────
-  reportProgress(3, "QA & finalizing...");
+  // ── Step 5: QA + Finalize ──────────────────────────────────────────
+  reportProgress(5, "QA & finalizing...");
   messages.push({
     role: "user",
     content: `Review the email you just wrote against these QA criteria, fix any issues, and output the final version:
@@ -268,7 +317,25 @@ Output ONLY the final, polished email body as clean HTML — no commentary, no Q
     finalEmail = stripCodeFences(extractText(response));
   }
 
-  return finalEmail.trim();
+  const durationMs = Date.now() - startTime;
+
+  // Estimate cost — Sonnet pricing: $3/MTok input, $15/MTok output
+  const inputCost = (tokenUsage.input / 1_000_000) * 3;
+  const outputCost = (tokenUsage.output / 1_000_000) * 15;
+  const totalCost = inputCost + outputCost;
+
+  console.log(`  Tokens: ${tokenUsage.input} in / ${tokenUsage.output} out — $${totalCost.toFixed(3)}`);
+  console.log(`  Duration: ${(durationMs / 1000).toFixed(1)}s`);
+
+  return {
+    email: finalEmail.trim(),
+    usage: {
+      inputTokens: tokenUsage.input,
+      outputTokens: tokenUsage.output,
+      cost: totalCost,
+      durationMs,
+    },
+  };
 }
 
 /**

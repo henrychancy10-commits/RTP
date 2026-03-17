@@ -73,7 +73,51 @@ function createRowData(data = {}) {
     emailHtml: "",
     error: "",
     selected: false,
+    startTime: null,
+    durationMs: null,
+    cost: null,
   };
+}
+
+// --- Live timer management ---
+const activeTimers = new Map(); // rowId -> intervalId
+
+function startTimer(row) {
+  row.startTime = Date.now();
+  row.durationMs = null;
+  row.cost = null;
+  stopTimer(row.id);
+  const intervalId = setInterval(() => {
+    const tr = document.querySelector(`tr[data-id="${row.id}"]`);
+    if (!tr) return;
+    const timerTd = tr.querySelector(".col-timer");
+    if (timerTd) {
+      const elapsed = Date.now() - row.startTime;
+      timerTd.innerHTML = `<span class="timer-cell active">${formatDuration(elapsed)}</span>`;
+    }
+  }, 100);
+  activeTimers.set(row.id, intervalId);
+}
+
+function stopTimer(rowId) {
+  const existing = activeTimers.get(rowId);
+  if (existing) {
+    clearInterval(existing);
+    activeTimers.delete(rowId);
+  }
+}
+
+function formatDuration(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  if (min > 0) return `${min}m ${sec.toString().padStart(2, "0")}s`;
+  return `${sec}s`;
+}
+
+function formatCost(cost) {
+  if (cost === null || cost === undefined) return "";
+  return `$${cost.toFixed(2)}`;
 }
 
 function addRows(count, dataArray) {
@@ -120,6 +164,8 @@ function renderTable() {
       <td><input type="text" class="field-competitors" placeholder="CompA, CompB" value="${esc(row.competitors)}"></td>
       <td><input type="text" class="field-portfolio" placeholder="EnergyCAP..." value="${esc(row.portfolio)}"></td>
       <td><input type="text" class="field-context" placeholder="Met at SaaStr" value="${esc(row.context)}"></td>
+      <td class="col-timer">${row.durationMs ? `<span class="timer-cell">${formatDuration(row.durationMs)}</span>` : (row.startTime ? `<span class="timer-cell active">0s</span>` : "")}</td>
+      <td class="col-cost">${row.cost !== null ? `<span class="cost-cell"><span class="cost-value">${formatCost(row.cost)}</span></span>` : ""}</td>
       <td class="col-copy">${row.emailHtml ? `<button class="btn btn-small btn-copy copy-btn" data-id="${row.id}">Copy</button>` : ""}</td>
       <td class="col-outlook">${row.emailHtml ? `<button class="btn btn-small btn-outlook outlook-btn" data-id="${row.id}">Open</button>` : ""}</td>
       <td class="col-preview">${row.emailHtml ? `<span class="preview-link" data-id="${row.id}">View</span>` : ""}</td>
@@ -574,6 +620,7 @@ async function generateRow(row) {
   row.status = "generating";
   row.stepLabel = "";
   row.error = "";
+  startTimer(row);
   updateRowStatus(row);
 
   const res = await fetch("/api/generate", {
@@ -624,14 +671,21 @@ async function generateRow(row) {
         row.emailHtml = event.email;
         row.status = "generated";
         row.stepLabel = "";
+        stopTimer(row.id);
+        row.durationMs = event.usage?.durationMs || (Date.now() - row.startTime);
+        row.cost = event.usage?.cost ?? null;
         gotResult = true;
       } else if (event.type === "error") {
+        stopTimer(row.id);
+        row.durationMs = Date.now() - row.startTime;
         throw new Error(event.error);
       }
     }
   }
 
   if (!gotResult) {
+    stopTimer(row.id);
+    row.durationMs = Date.now() - row.startTime;
     throw new Error("Stream ended without producing an email");
   }
 
@@ -653,6 +707,8 @@ async function regenerateRow(rowId) {
     await generateRow(row);
     showStatus("Email regenerated.", "success");
   } catch (err) {
+    stopTimer(row.id);
+    if (!row.durationMs && row.startTime) row.durationMs = Date.now() - row.startTime;
     row.status = "error";
     row.error = err.message;
     row.stepLabel = "";
@@ -687,6 +743,8 @@ generateAllBtn.addEventListener("click", async () => {
       await generateRow(row);
       completed++;
     } catch (err) {
+      stopTimer(row.id);
+      if (!row.durationMs && row.startTime) row.durationMs = Date.now() - row.startTime;
       row.status = "error";
       row.error = err.message;
       row.stepLabel = "";
@@ -812,6 +870,16 @@ function updateRowStatus(row) {
   const statusTd = tr.querySelector(".col-status");
   const statusText = row.status === "generating" && row.stepLabel ? esc(row.stepLabel) : formatStatus(row.status);
   statusTd.innerHTML = `<span class="status-badge status-${row.status}" title="${esc(row.error || row.stepLabel)}">${statusText}</span>`;
+
+  const timerTd = tr.querySelector(".col-timer");
+  if (timerTd && row.durationMs) {
+    timerTd.innerHTML = `<span class="timer-cell">${formatDuration(row.durationMs)}</span>`;
+  }
+
+  const costTd = tr.querySelector(".col-cost");
+  if (costTd && row.cost !== null) {
+    costTd.innerHTML = `<span class="cost-cell"><span class="cost-value">${formatCost(row.cost)}</span></span>`;
+  }
 
   const copyTd = tr.querySelector(".col-copy");
   if (row.emailHtml && copyTd) {
