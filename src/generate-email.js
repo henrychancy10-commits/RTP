@@ -77,6 +77,12 @@ export async function generateEmail(url, options = {}) {
   const { prompt: systemPrompt, source: promptSource } = loadSystemPrompt(promptFile);
   console.log(`  Using prompt from: ${promptSource}`);
 
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error(
+      "ANTHROPIC_API_KEY is not set. Add it to your .env file or deployment environment variables."
+    );
+  }
+
   const client = new Anthropic();
   const webSearchTools = [
     {
@@ -114,7 +120,17 @@ export async function generateEmail(url, options = {}) {
       return Promise.race([p, timer]);
     }
 
-    let response = await callWithTimeout(client.messages.create(params));
+    let response;
+    try {
+      response = await callWithTimeout(client.messages.create(params));
+    } catch (err) {
+      // Surface Anthropic API error details
+      if (err.status) {
+        const detail = err.error?.error?.message || err.message;
+        throw new Error(`Anthropic API error (${err.status}): ${detail}`);
+      }
+      throw err;
+    }
 
     while (response.stop_reason === "pause_turn") {
       console.log("    Web search in progress, continuing...");
@@ -122,7 +138,15 @@ export async function generateEmail(url, options = {}) {
         ...messages,
         { role: "assistant", content: response.content },
       ];
-      response = await callWithTimeout(client.messages.create({ ...params, messages }));
+      try {
+        response = await callWithTimeout(client.messages.create({ ...params, messages }));
+      } catch (err) {
+        if (err.status) {
+          const detail = err.error?.error?.message || err.message;
+          throw new Error(`Anthropic API error (${err.status}): ${detail}`);
+        }
+        throw err;
+      }
     }
 
     return response;

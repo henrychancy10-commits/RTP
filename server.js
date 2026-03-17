@@ -22,6 +22,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Warn at startup if the Anthropic API key is missing
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn(
+    "\n  ⚠  ANTHROPIC_API_KEY is not set. Email generation will fail." +
+    "\n     Set it in your .env file or deployment environment.\n"
+  );
+}
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -91,9 +99,12 @@ app.post("/api/generate", async (req, res) => {
 
     res.write(`data: ${JSON.stringify({ type: "done", email: emailHtml })}\n\n`);
   } catch (err) {
-    console.error("GENERATE ERROR:", err.message || err);
+    const msg = err.message || String(err);
+    console.error("GENERATE ERROR:", msg);
+    if (err.status) console.error("  HTTP status:", err.status);
+    if (err.error) console.error("  API detail:", JSON.stringify(err.error));
     console.error(err.stack);
-    res.write(`data: ${JSON.stringify({ type: "error", error: err.message || "Unknown error" })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: "error", error: msg })}\n\n`);
   }
 
   clearInterval(keepAlive);
