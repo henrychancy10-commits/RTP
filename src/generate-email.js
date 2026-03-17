@@ -38,8 +38,16 @@ export function loadSystemPrompt(promptFile) {
 }
 
 /**
- * Uses Claude to generate an email body from a company URL.
- * Claude will fetch and research the URL itself via web search.
+ * Multi-step email generation pipeline:
+ *   1. Research the company
+ *   2. Learn everything about the market
+ *   3. Learn the competitive ecosystem
+ *   4. Write the email based on template instructions
+ *   5. QA the email
+ *   6. Provide the final email
+ *
+ * Each step is a separate API call that builds on the accumulated
+ * conversation history, giving Claude focused instructions at each stage.
  *
  * @param {string} url - Company URL to research
  * @param {object} options
@@ -65,61 +73,118 @@ export async function generateEmail(url, options = {}) {
   console.log(`  Using prompt from: ${promptSource}`);
 
   const client = new Anthropic();
-
-  const userMessage = buildUserMessage(url, { recipientName, competitors, portfolio, context });
-
-  let messages = [{ role: "user", content: userMessage }];
-
-  let response = await client.messages.create({
-    model,
-    max_tokens: 16000,
-    thinking: {
-      type: "enabled",
-      budget_tokens: 10000,
+  const webSearchTools = [
+    {
+      type: "web_search_20250305",
+      name: "web_search",
+      max_uses: 10,
     },
-    tools: [
-      {
-        type: "web_search_20250305",
-        name: "web_search",
-        max_uses: 10,
-      },
-    ],
-    system: systemPrompt,
-    messages,
-  });
+  ];
 
-  // Handle pause_turn: the API may pause long-running web search turns
-  while (response.stop_reason === "pause_turn") {
-    console.log("  Web search in progress, continuing...");
-    messages = [
-      ...messages,
-      { role: "assistant", content: response.content },
-    ];
-    response = await client.messages.create({
+  // Shared helper: send a message and handle pause_turn loops for web search
+  async function chat(messages, { tools, maxTokens = 16000, thinkingBudget = 10000 } = {}) {
+    const params = {
       model,
-      max_tokens: 16000,
-      thinking: {
-        type: "enabled",
-        budget_tokens: 10000,
-      },
-      tools: [
-        {
-          type: "web_search_20250305",
-          name: "web_search",
-          max_uses: 10,
-        },
-      ],
+      max_tokens: maxTokens,
+      thinking: { type: "enabled", budget_tokens: thinkingBudget },
       system: systemPrompt,
       messages,
-    });
+    };
+    if (tools) params.tools = tools;
+
+    let response = await client.messages.create(params);
+
+    while (response.stop_reason === "pause_turn") {
+      console.log("    Web search in progress, continuing...");
+      messages = [
+        ...messages,
+        { role: "assistant", content: response.content },
+      ];
+      response = await client.messages.create({ ...params, messages });
+    }
+
+    return response;
   }
 
-  const text = response.content
-    .filter((block) => block.type === "text")
-    .map((block) => block.text)
-    .join("");
+  function extractText(response) {
+    return response.content
+      .filter((block) => block.type === "text")
+      .map((block) => block.text)
+      .join("");
+  }
 
-  return text.trim();
+  // Build running conversation history
+  let messages = [];
+
+  // ── Step 1: Research the company ──────────────────────────────────
+  console.log("  Step 1/6: Researching company...");
+  messages.push({
+    role: "user",
+    content: `Research this company thoroughly: ${url}\n\nVisit their website and gather key information: what the company does, their products/services, founding story, leadership team, recent news, funding history, and any unique value propositions. Provide a comprehensive company profile.`,
+  });
+
+  let response = await chat(messages, { tools: webSearchTools });
+  messages.push({ role: "assistant", content: response.content });
+
+  // ── Step 2: Learn everything about the market ─────────────────────
+  console.log("  Step 2/6: Researching market...");
+  messages.push({
+    role: "user",
+    content: `Now research the market this company operates in. I need to understand:\n- The overall market size and growth trajectory\n- Key trends shaping this space\n- Major tailwinds and headwinds\n- Who the buyers/customers are and what drives their purchasing decisions\n- Any regulatory or macro factors that matter\n\nBe specific with data points where possible.`,
+  });
+
+  response = await chat(messages, { tools: webSearchTools });
+  messages.push({ role: "assistant", content: response.content });
+
+  // ── Step 3: Learn the competitive ecosystem ───────────────────────
+  const competitorHint = competitors
+    ? `\n\nI already know about these competitors: ${competitors}. Include them but also find others.`
+    : "";
+  console.log("  Step 3/6: Researching competitive ecosystem...");
+  messages.push({
+    role: "user",
+    content: `Now map out the competitive ecosystem for this company. I need:\n- Direct competitors and how they differentiate\n- Indirect competitors or adjacent players\n- The company's defensibility and competitive advantages\n- Where this company is stronger or weaker vs. the field\n- Any recent competitive moves (fundraises, launches, pivots, acquisitions)${competitorHint}`,
+  });
+
+  response = await chat(messages, { tools: webSearchTools });
+  messages.push({ role: "assistant", content: response.content });
+
+  // ── Step 4: Write the email ───────────────────────────────────────
+  const recipientLine = formatNames(recipientName);
+  let writePrompt = `Based on all the research above, now write the outreach email.\n\nRecipient name: ${recipientLine}\n`;
+  if (portfolio) writePrompt += `Relevant portfolio company: ${portfolio}\n`;
+  if (context) writePrompt += `Additional context: ${context}\n`;
+  writePrompt += `\nFollow the system prompt instructions exactly for tone, structure, and formatting. Use the research to make the email specific, insightful, and compelling — not generic. Output only the email body as clean HTML.`;
+
+  console.log("  Step 4/6: Writing email...");
+  messages.push({ role: "user", content: writePrompt });
+
+  response = await chat(messages);
+  messages.push({ role: "assistant", content: response.content });
+  const draftEmail = extractText(response);
+
+  // ── Step 5: QA the email ──────────────────────────────────────────
+  console.log("  Step 5/6: QA review...");
+  messages.push({
+    role: "user",
+    content: `Review the email you just wrote against these QA criteria:\n\n1. **Accuracy** — Are all company facts, market claims, and competitor references correct based on your research?\n2. **Specificity** — Does the email contain specific, researched details (not generic filler)?\n3. **Tone** — Is it professional, personable, and non-salesy?\n4. **Structure** — Short paragraphs, clear flow, appropriate length?\n5. **Template compliance** — Does it follow the system prompt formatting rules exactly (HTML tags, no subject line, no placeholder brackets, no code fences)?\n6. **Call to action** — Is there a clear, natural next step?\n7. **Recipient name** — Is "${recipientLine}" used correctly in the greeting?\n\nList any issues you find. If there are problems, provide a corrected version of the full email. If the email passes QA, just confirm it's good.`,
+  });
+
+  response = await chat(messages);
+  messages.push({ role: "assistant", content: response.content });
+  const qaResult = extractText(response);
+
+  // ── Step 6: Provide the final email ───────────────────────────────
+  console.log("  Step 6/6: Finalizing...");
+  messages.push({
+    role: "user",
+    content: `Now provide the final, polished email incorporating any QA fixes. Output ONLY the email body as clean HTML — no commentary, no explanation, no code fences. Just the raw HTML email body.`,
+  });
+
+  response = await chat(messages);
+  const finalEmail = extractText(response);
+
+  return finalEmail.trim();
 }
 
 /**
