@@ -39,15 +39,13 @@ export function loadSystemPrompt(promptFile) {
 
 /**
  * Multi-step email generation pipeline:
- *   1. Research the company
- *   2. Learn everything about the market
- *   3. Learn the competitive ecosystem
- *   4. Write the email based on template instructions
- *   5. QA the email
- *   6. Provide the final email
+ *   1. Research the company and its market
+ *   2. Map the competitive ecosystem
+ *   3. Write the email based on template instructions
+ *   4. QA the email and produce the final version
  *
- * Each step is a separate API call that builds on the accumulated
- * conversation history, giving Claude focused instructions at each stage.
+ * Each step builds on the accumulated conversation history.
+ * Prompt caching keeps the system prompt cheap across turns.
  *
  * @param {string} url - Company URL to research
  * @param {object} options
@@ -81,13 +79,22 @@ export async function generateEmail(url, options = {}) {
     },
   ];
 
+  // System prompt with cache_control so it's cached across all turns
+  const systemMessages = [
+    {
+      type: "text",
+      text: systemPrompt,
+      cache_control: { type: "ephemeral" },
+    },
+  ];
+
   // Shared helper: send a message and handle pause_turn loops for web search
-  async function chat(messages, { tools, maxTokens = 16000, thinkingBudget = 10000 } = {}) {
+  async function chat(messages, { tools, maxTokens = 16000, thinkingBudget = 5000 } = {}) {
     const params = {
       model,
       max_tokens: maxTokens,
       thinking: { type: "enabled", budget_tokens: thinkingBudget },
-      system: systemPrompt,
+      system: systemMessages,
       messages,
     };
     if (tools) params.tools = tools;
@@ -116,69 +123,77 @@ export async function generateEmail(url, options = {}) {
   // Build running conversation history
   let messages = [];
 
-  // ── Step 1: Research the company ──────────────────────────────────
-  console.log("  Step 1/6: Researching company...");
+  // ── Step 1: Research the company AND its market ───────────────────
+  console.log("  Step 1/4: Researching company & market...");
   messages.push({
     role: "user",
-    content: `Research this company thoroughly: ${url}\n\nVisit their website and gather key information: what the company does, their products/services, founding story, leadership team, recent news, funding history, and any unique value propositions. Provide a comprehensive company profile.`,
+    content: `Research this company thoroughly: ${url}
+
+Visit their website and gather key information: what the company does, their products/services, founding story, leadership team, recent news, funding history, and any unique value propositions.
+
+Then research the market they operate in:
+- Overall market size and growth trajectory
+- Key trends shaping this space
+- Major tailwinds and headwinds
+- Who the buyers/customers are and what drives their purchasing decisions
+- Any regulatory or macro factors that matter
+
+Be specific with data points where possible. Provide a comprehensive company profile followed by a market analysis.`,
   });
 
   let response = await chat(messages, { tools: webSearchTools });
   messages.push({ role: "assistant", content: response.content });
 
-  // ── Step 2: Learn everything about the market ─────────────────────
-  console.log("  Step 2/6: Researching market...");
-  messages.push({
-    role: "user",
-    content: `Now research the market this company operates in. I need to understand:\n- The overall market size and growth trajectory\n- Key trends shaping this space\n- Major tailwinds and headwinds\n- Who the buyers/customers are and what drives their purchasing decisions\n- Any regulatory or macro factors that matter\n\nBe specific with data points where possible.`,
-  });
-
-  response = await chat(messages, { tools: webSearchTools });
-  messages.push({ role: "assistant", content: response.content });
-
-  // ── Step 3: Learn the competitive ecosystem ───────────────────────
+  // ── Step 2: Map the competitive ecosystem ─────────────────────────
   const competitorHint = competitors
     ? `\n\nI already know about these competitors: ${competitors}. Include them but also find others.`
     : "";
-  console.log("  Step 3/6: Researching competitive ecosystem...");
+  console.log("  Step 2/4: Researching competitive ecosystem...");
   messages.push({
     role: "user",
-    content: `Now map out the competitive ecosystem for this company. I need:\n- Direct competitors and how they differentiate\n- Indirect competitors or adjacent players\n- The company's defensibility and competitive advantages\n- Where this company is stronger or weaker vs. the field\n- Any recent competitive moves (fundraises, launches, pivots, acquisitions)${competitorHint}`,
+    content: `Now map out the competitive ecosystem for this company. I need:
+- Direct competitors and how they differentiate
+- Indirect competitors or adjacent players
+- The company's defensibility and competitive advantages
+- Where this company is stronger or weaker vs. the field
+- Any recent competitive moves (fundraises, launches, pivots, acquisitions)${competitorHint}`,
   });
 
   response = await chat(messages, { tools: webSearchTools });
   messages.push({ role: "assistant", content: response.content });
 
-  // ── Step 4: Write the email ───────────────────────────────────────
+  // ── Step 3: Write the email ───────────────────────────────────────
   const recipientLine = formatNames(recipientName);
-  let writePrompt = `Based on all the research above, now write the outreach email.\n\nRecipient name: ${recipientLine}\n`;
+  let writePrompt = `Based on all the research above, now write the outreach email.
+
+Recipient name: ${recipientLine}
+`;
   if (portfolio) writePrompt += `Relevant portfolio company: ${portfolio}\n`;
   if (context) writePrompt += `Additional context: ${context}\n`;
-  writePrompt += `\nFollow the system prompt instructions exactly for tone, structure, and formatting. Use the research to make the email specific, insightful, and compelling — not generic. Output only the email body as clean HTML.`;
+  writePrompt += `
+Follow the system prompt instructions exactly for tone, structure, and formatting. Use the research to make the email specific, insightful, and compelling — not generic. Output only the email body as clean HTML.`;
 
-  console.log("  Step 4/6: Writing email...");
+  console.log("  Step 3/4: Writing email...");
   messages.push({ role: "user", content: writePrompt });
 
   response = await chat(messages);
   messages.push({ role: "assistant", content: response.content });
-  const draftEmail = extractText(response);
 
-  // ── Step 5: QA the email ──────────────────────────────────────────
-  console.log("  Step 5/6: QA review...");
+  // ── Step 4: QA and finalize ───────────────────────────────────────
+  console.log("  Step 4/4: QA review & finalizing...");
   messages.push({
     role: "user",
-    content: `Review the email you just wrote against these QA criteria:\n\n1. **Accuracy** — Are all company facts, market claims, and competitor references correct based on your research?\n2. **Specificity** — Does the email contain specific, researched details (not generic filler)?\n3. **Tone** — Is it professional, personable, and non-salesy?\n4. **Structure** — Short paragraphs, clear flow, appropriate length?\n5. **Template compliance** — Does it follow the system prompt formatting rules exactly (HTML tags, no subject line, no placeholder brackets, no code fences)?\n6. **Call to action** — Is there a clear, natural next step?\n7. **Recipient name** — Is "${recipientLine}" used correctly in the greeting?\n\nList any issues you find. If there are problems, provide a corrected version of the full email. If the email passes QA, just confirm it's good.`,
-  });
+    content: `Review the email you just wrote against these QA criteria:
 
-  response = await chat(messages);
-  messages.push({ role: "assistant", content: response.content });
-  const qaResult = extractText(response);
+1. **Accuracy** — Are all company facts, market claims, and competitor references correct based on your research?
+2. **Specificity** — Does the email contain specific, researched details (not generic filler)?
+3. **Tone** — Is it professional, personable, and non-salesy?
+4. **Structure** — Short paragraphs, clear flow, appropriate length?
+5. **Template compliance** — Does it follow the system prompt formatting rules exactly (HTML tags, no subject line, no placeholder brackets, no code fences)?
+6. **Call to action** — Is there a clear, natural next step?
+7. **Recipient name** — Is "${recipientLine}" used correctly in the greeting?
 
-  // ── Step 6: Provide the final email ───────────────────────────────
-  console.log("  Step 6/6: Finalizing...");
-  messages.push({
-    role: "user",
-    content: `Now provide the final, polished email incorporating any QA fixes. Output ONLY the email body as clean HTML — no commentary, no explanation, no code fences. Just the raw HTML email body.`,
+Fix any issues and then output ONLY the final, polished email body as clean HTML — no commentary, no explanation, no code fences. Just the raw HTML email body.`,
   });
 
   response = await chat(messages);
@@ -200,24 +215,4 @@ function formatNames(raw) {
   if (names.length === 1) return names[0];
   if (names.length === 2) return `${names[0]} & ${names[1]}`;
   return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
-}
-
-function buildUserMessage(url, { recipientName, competitors, portfolio, context }) {
-  let msg = `${url}\n`;
-
-  msg += `\nRecipient name: ${formatNames(recipientName)}\n`;
-
-  if (competitors) {
-    msg += `\nKnown competitors: ${competitors}\n`;
-  }
-
-  if (portfolio) {
-    msg += `\nRelevant portfolio company: ${portfolio}\n`;
-  }
-
-  if (context) {
-    msg += `\nAdditional context: ${context}\n`;
-  }
-
-  return msg;
 }
