@@ -131,19 +131,26 @@ export async function generateEmail(url, options = {}) {
     ? `\n\nI already know about these competitors: ${competitors}. Include them but also find others.`
     : "";
 
-  // ── Step 1: Parallel research ──────────────────────────────────────
-  reportProgress(1, "Researching (parallel)...");
+  // ── Step 1: Research ────────────────────────────────────────────────
+  const hasRecipient = recipientName && recipientName !== "[FIRST NAME]";
+  reportProgress(1, hasRecipient ? "Researching (parallel)..." : "Researching company...");
 
-  const researchPromises = [
-    // 1a: Recipient
-    chat(
-      [{ role: "user", content: `Research the person named "${recipientLine}" who works at or is associated with this company: ${url}
+  const researchPromises = [];
+
+  // Only research the recipient if a name was provided
+  if (hasRecipient) {
+    researchPromises.push(
+      chat(
+        [{ role: "user", content: `Research the person named "${recipientLine}" who works at or is associated with this company: ${url}
 
 Find key facts only — their current role, brief professional background, and anything notable they've said or done publicly. Keep it concise. Do NOT make anything up.` }],
-      { tools: webSearchTools }
-    ),
+        { tools: webSearchTools }
+      )
+    );
+  }
 
-    // 1b: Company + market + competitors (single call)
+  // Company + market + competitors
+  researchPromises.push(
     chat(
       [{ role: "user", content: `Research the company at ${url}. In a single concise report, cover:
 
@@ -153,22 +160,25 @@ Find key facts only — their current role, brief professional background, and a
 
 Be concise — bullet points are fine. Focus on what's useful for writing a personalized outreach email.` }],
       { tools: webSearchTools }
-    ),
-  ];
+    )
+  );
 
-  const [recipientRes, companyRes] = await Promise.all(researchPromises);
+  const results = await Promise.all(researchPromises);
 
-  const recipientResearch = extractText(recipientRes);
-  const companyResearch = extractText(companyRes);
+  let recipientResearch = "";
+  let companyResearch = "";
+  if (hasRecipient) {
+    recipientResearch = extractText(results[0]);
+    companyResearch = extractText(results[1]);
+  } else {
+    companyResearch = extractText(results[0]);
+  }
 
   // ── Step 2: Write the email ────────────────────────────────────────
   reportProgress(2, "Writing email...");
 
   let writePrompt = `Here is research I've gathered. Use it to write a personalized outreach email.
-
-## Recipient Research
-${recipientResearch}
-
+${recipientResearch ? `\n## Recipient Research\n${recipientResearch}\n` : ""}
 ## Company, Market & Competitive Research
 ${companyResearch}
 
