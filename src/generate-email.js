@@ -38,18 +38,13 @@ export function loadSystemPrompt(promptFile) {
 }
 
 /**
- * Multi-step email generation pipeline:
- *   1. Research the recipient
- *   2. Research the company
- *   3. Research the market
- *   4. Map the competitive ecosystem
- *   5. Write the email based on template instructions
- *   6. QA the email
- *   7. Produce the final polished email
+ * Email generation pipeline (parallelized research):
+ *   1. Research recipient, company, market, competitors — all in parallel
+ *   2. Write the email using combined research
+ *   3. QA + produce the final polished email
  *
- * Each step is a separate API call with focused instructions that builds
- * on the accumulated conversation history. Prompt caching keeps the
- * system prompt cheap across turns.
+ * Steps 1a-1d run simultaneously via Promise.all, cutting wall-clock
+ * time from ~7 sequential API calls to ~3 rounds.
  *
  * @param {string} url - Company URL to research
  * @param {object} options
@@ -73,9 +68,10 @@ export async function generateEmail(url, options = {}) {
     onProgress,
   } = options;
 
+  const TOTAL_STEPS = 3;
   function reportProgress(step, label) {
-    console.log(`  Step ${step}/7: ${label}`);
-    if (onProgress) onProgress({ step, totalSteps: 7, label });
+    console.log(`  Step ${step}/${TOTAL_STEPS}: ${label}`);
+    if (onProgress) onProgress({ step, totalSteps: TOTAL_STEPS, label });
   }
 
   const { prompt: systemPrompt, source: promptSource } = loadSystemPrompt(promptFile);
@@ -86,11 +82,10 @@ export async function generateEmail(url, options = {}) {
     {
       type: "web_search_20250305",
       name: "web_search",
-      max_uses: 15,
+      max_uses: 10,
     },
   ];
 
-  // System prompt with cache_control so it's cached across all turns
   const systemMessages = [
     {
       type: "text",
@@ -99,8 +94,8 @@ export async function generateEmail(url, options = {}) {
     },
   ];
 
-  // Shared helper: send a message and handle pause_turn loops for web search
-  async function chat(messages, { tools, maxTokens = 16000, thinkingBudget = 8000 } = {}) {
+  // Send a message and handle pause_turn loops for web search
+  async function chat(messages, { tools, maxTokens = 16000, thinkingBudget = 5000 } = {}) {
     const params = {
       model,
       max_tokens: maxTokens,
@@ -131,15 +126,18 @@ export async function generateEmail(url, options = {}) {
       .join("");
   }
 
-  // Build running conversation history
-  let messages = [];
   const recipientLine = formatNames(recipientName);
+  const competitorHint = competitors
+    ? `\n\nI already know about these competitors: ${competitors}. Include them but also find others.`
+    : "";
 
-  // ── Step 1: Research the recipient ────────────────────────────────
-  reportProgress(1, "Researching recipient...");
-  messages.push({
-    role: "user",
-    content: `Research the person named "${recipientLine}" who works at or is associated with this company: ${url}
+  // ── Step 1: Parallel research ──────────────────────────────────────
+  reportProgress(1, "Researching (parallel)...");
+
+  const researchPromises = [
+    // 1a: Recipient
+    chat(
+      [{ role: "user", content: `Research the person named "${recipientLine}" who works at or is associated with this company: ${url}
 
 Search for them online and gather whatever you can find:
 - Their current role and responsibilities
@@ -149,61 +147,70 @@ Search for them online and gather whatever you can find:
 - Any recent news or announcements involving them
 - Their LinkedIn headline/summary if it appears in search snippets
 
-If you can't find much, note what you do find and we'll work with it. Do NOT make anything up.`,
-  });
+If you can't find much, note what you do find and we'll work with it. Do NOT make anything up.` }],
+      { tools: webSearchTools }
+    ),
 
-  let response = await chat(messages, { tools: webSearchTools });
-  messages.push({ role: "assistant", content: response.content });
+    // 1b: Company
+    chat(
+      [{ role: "user", content: `Research this company thoroughly: ${url}
 
-  // ── Step 2: Research the company ──────────────────────────────────
-  reportProgress(2, "Researching company...");
-  messages.push({
-    role: "user",
-    content: `Now research this company thoroughly: ${url}
+Visit their website and gather key information: what the company does, their products/services, founding story, leadership team, recent news, funding history, and any unique value propositions. Provide a comprehensive company profile.` }],
+      { tools: webSearchTools }
+    ),
 
-Visit their website and gather key information: what the company does, their products/services, founding story, leadership team, recent news, funding history, and any unique value propositions. Provide a comprehensive company profile.`,
-  });
-
-  response = await chat(messages, { tools: webSearchTools });
-  messages.push({ role: "assistant", content: response.content });
-
-  // ── Step 3: Research the market ───────────────────────────────────
-  reportProgress(3, "Researching market...");
-  messages.push({
-    role: "user",
-    content: `Now research the market this company operates in. I need to understand:
+    // 1c: Market
+    chat(
+      [{ role: "user", content: `Research the market for the company at ${url}. I need to understand:
 - The overall market size and growth trajectory
 - Key trends shaping this space
 - Major tailwinds and headwinds
 - Who the buyers/customers are and what drives their purchasing decisions
 - Any regulatory or macro factors that matter
 
-Be specific with data points where possible.`,
-  });
+Be specific with data points where possible.` }],
+      { tools: webSearchTools }
+    ),
 
-  response = await chat(messages, { tools: webSearchTools });
-  messages.push({ role: "assistant", content: response.content });
-
-  // ── Step 4: Map the competitive ecosystem ─────────────────────────
-  const competitorHint = competitors
-    ? `\n\nI already know about these competitors: ${competitors}. Include them but also find others.`
-    : "";
-  reportProgress(4, "Researching competitors...");
-  messages.push({
-    role: "user",
-    content: `Now map out the competitive ecosystem for this company. I need:
+    // 1d: Competitors
+    chat(
+      [{ role: "user", content: `Map out the competitive ecosystem for the company at ${url}. I need:
 - Direct competitors and how they differentiate
 - Indirect competitors or adjacent players
 - The company's defensibility and competitive advantages
 - Where this company is stronger or weaker vs. the field
-- Any recent competitive moves (fundraises, launches, pivots, acquisitions)${competitorHint}`,
-  });
+- Any recent competitive moves (fundraises, launches, pivots, acquisitions)${competitorHint}` }],
+      { tools: webSearchTools }
+    ),
+  ];
 
-  response = await chat(messages, { tools: webSearchTools });
-  messages.push({ role: "assistant", content: response.content });
+  const [recipientRes, companyRes, marketRes, competitorRes] = await Promise.all(researchPromises);
 
-  // ── Step 5: Write the email ───────────────────────────────────────
-  let writePrompt = `Based on all the research above — about the recipient, the company, the market, and the competitive landscape — now write the outreach email.
+  const recipientResearch = extractText(recipientRes);
+  const companyResearch = extractText(companyRes);
+  const marketResearch = extractText(marketRes);
+  const competitorResearch = extractText(competitorRes);
+
+  // ── Step 2: Write the email ────────────────────────────────────────
+  reportProgress(2, "Writing email...");
+
+  let writePrompt = `Here is research I've gathered. Use it to write a personalized outreach email.
+
+## Recipient Research
+${recipientResearch}
+
+## Company Research
+${companyResearch}
+
+## Market Research
+${marketResearch}
+
+## Competitive Landscape
+${competitorResearch}
+
+---
+
+Now write the outreach email.
 
 Recipient name: ${recipientLine}
 `;
@@ -212,19 +219,17 @@ Recipient name: ${recipientLine}
   writePrompt += `
 Follow the system prompt instructions exactly for tone, structure, and formatting. Use the research to make the email specific, insightful, and compelling — not generic. Personalize the email to the recipient based on what you learned about them. Output only the email body as clean HTML.`;
 
-  reportProgress(5, "Writing email...");
-  messages.push({ role: "user", content: writePrompt });
-
-  response = await chat(messages, { thinkingBudget: 10000 });
+  let messages = [{ role: "user", content: writePrompt }];
+  let response = await chat(messages, { thinkingBudget: 10000 });
   messages.push({ role: "assistant", content: response.content });
 
-  // ── Step 6: QA the email ──────────────────────────────────────────
-  reportProgress(6, "QA review...");
+  // ── Step 3: QA + Finalize ──────────────────────────────────────────
+  reportProgress(3, "QA & finalizing...");
   messages.push({
     role: "user",
-    content: `Review the email you just wrote against these QA criteria:
+    content: `Review the email you just wrote against these QA criteria, fix any issues, and output the final version:
 
-1. **Accuracy** — Are all company facts, market claims, and competitor references correct based on your research?
+1. **Accuracy** — Are all company facts, market claims, and competitor references correct based on the research?
 2. **Specificity** — Does the email contain specific, researched details (not generic filler)?
 3. **Personalization** — Does the email reference something specific about the recipient (their role, background, public statements, or interests)?
 4. **Tone** — Is it professional, personable, and non-salesy?
@@ -233,20 +238,10 @@ Follow the system prompt instructions exactly for tone, structure, and formattin
 7. **Call to action** — Is there a clear, natural next step?
 8. **Recipient name** — Is "${recipientLine}" used correctly in the greeting?
 
-List every issue you find, no matter how small. If there are problems, provide a corrected version of the full email. If the email passes QA, confirm it's good.`,
+Output ONLY the final, polished email body as clean HTML — no commentary, no QA notes, no code fences. Just the raw HTML email body.`,
   });
 
-  response = await chat(messages, { thinkingBudget: 10000 });
-  messages.push({ role: "assistant", content: response.content });
-
-  // ── Step 7: Produce the final email ───────────────────────────────
-  reportProgress(7, "Finalizing...");
-  messages.push({
-    role: "user",
-    content: `Now provide the final, polished email incorporating any QA fixes. Output ONLY the email body as clean HTML — no commentary, no explanation, no code fences. Just the raw HTML email body.`,
-  });
-
-  response = await chat(messages, { maxTokens: 4096, thinkingBudget: 4000 });
+  response = await chat(messages, { maxTokens: 4096, thinkingBudget: 8000 });
   let finalEmail = extractText(response);
 
   // Validate output: strip code fences if model wrapped them despite instructions
