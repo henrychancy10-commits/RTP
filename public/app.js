@@ -1,6 +1,6 @@
 // --- State ---
 let rows = []; // { id, url, name, to, subject, competitors, portfolio, context, status, emailHtml, error }
-let selectedProvider = "gmail";
+
 let selectedTemplate = "";
 let currentPreviewRowId = null;
 let nextId = 1;
@@ -25,20 +25,12 @@ const closeModal = document.getElementById("closeModal");
 const modalDraftBtn = document.getElementById("modalDraftBtn");
 const modalSendBtn = document.getElementById("modalSendBtn");
 const modalCopyBtn = document.getElementById("modalCopyBtn");
-const gmailStatusText = document.getElementById("gmailStatusText");
-const gmailConnectLink = document.getElementById("gmailConnectLink");
-const gmailStatusDiv = document.getElementById("gmailStatus");
 const modalOutlookBtn = document.getElementById("modalOutlookBtn");
 const statusMessage = document.getElementById("statusMessage");
 
 // --- Init ---
 addRows(5);
-checkGmailStatus();
 loadTemplates();
-if (window.location.search.includes("gmail=connected")) {
-  window.history.replaceState({}, "", "/");
-  checkGmailStatus();
-}
 
 // --- Template selector ---
 async function loadTemplates() {
@@ -64,33 +56,6 @@ templateSelect.addEventListener("change", () => {
   selectedTemplate = templateSelect.value;
 });
 
-// --- Provider toggle ---
-document.querySelectorAll(".provider-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".provider-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    selectedProvider = btn.dataset.provider;
-    gmailStatusDiv.style.display = selectedProvider === "gmail" ? "flex" : "none";
-  });
-});
-
-// --- Gmail status ---
-async function checkGmailStatus() {
-  try {
-    const res = await fetch("/api/gmail/status");
-    const data = await res.json();
-    if (data.connected) {
-      gmailStatusText.textContent = "Gmail connected";
-      gmailStatusText.classList.add("connected");
-      gmailConnectLink.style.display = "none";
-    } else {
-      gmailStatusText.textContent = "Not connected";
-      gmailConnectLink.style.display = "inline-flex";
-    }
-  } catch {
-    gmailStatusText.textContent = "Could not check status";
-  }
-}
 
 // --- Row management ---
 function createRowData(data = {}) {
@@ -746,12 +711,12 @@ draftAllBtn.addEventListener("click", async () => {
     return;
   }
 
-  if (!confirm(`Create ${toDraft.length} draft(s) in ${selectedProvider === "gmail" ? "Gmail" : "Outlook"}?`)) return;
+  if (!confirm(`Create ${toDraft.length} draft(s)?`)) return;
 
   draftAllBtn.disabled = true;
   draftAllBtn.textContent = "Drafting...";
 
-  const endpoint = selectedProvider === "gmail" ? "/api/gmail/draft" : "/api/outlook/draft";
+  const endpoint = "/api/gmail/draft";
   let completed = 0;
   let errors = 0;
 
@@ -794,12 +759,12 @@ sendAllBtn.addEventListener("click", async () => {
     return;
   }
 
-  if (!confirm(`Send ${toSend.length} email(s) via ${selectedProvider === "gmail" ? "Gmail" : "Outlook"} RIGHT NOW?`)) return;
+  if (!confirm(`Send ${toSend.length} email(s) RIGHT NOW?`)) return;
 
   sendAllBtn.disabled = true;
   sendAllBtn.textContent = "Sending...";
 
-  const endpoint = selectedProvider === "gmail" ? "/api/gmail/send" : "/api/outlook/send";
+  const endpoint = "/api/gmail/send";
   let completed = 0;
   let errors = 0;
 
@@ -985,7 +950,7 @@ modalDraftBtn.addEventListener("click", async () => {
   if (!row) return;
   syncRowFromDom(row);
 
-  const endpoint = selectedProvider === "gmail" ? "/api/gmail/draft" : "/api/outlook/draft";
+  const endpoint = "/api/gmail/draft";
   modalDraftBtn.disabled = true;
   modalDraftBtn.textContent = "Creating...";
 
@@ -1016,7 +981,7 @@ modalSendBtn.addEventListener("click", async () => {
 
   if (!confirm(`Send this email to ${row.to} right now?`)) return;
 
-  const endpoint = selectedProvider === "gmail" ? "/api/gmail/send" : "/api/outlook/send";
+  const endpoint = "/api/gmail/send";
   modalSendBtn.disabled = true;
   modalSendBtn.textContent = "Sending...";
 
