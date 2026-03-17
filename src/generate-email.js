@@ -82,7 +82,7 @@ export async function generateEmail(url, options = {}) {
     {
       type: "web_search_20250305",
       name: "web_search",
-      max_uses: 10,
+      max_uses: 5,
     },
   ];
 
@@ -95,7 +95,7 @@ export async function generateEmail(url, options = {}) {
   ];
 
   // Send a message and handle pause_turn loops for web search
-  async function chat(messages, { tools, maxTokens = 16000, thinkingBudget = 5000 } = {}) {
+  async function chat(messages, { tools, maxTokens = 8000, thinkingBudget = 3000 } = {}) {
     const params = {
       model,
       max_tokens: maxTokens,
@@ -139,57 +139,27 @@ export async function generateEmail(url, options = {}) {
     chat(
       [{ role: "user", content: `Research the person named "${recipientLine}" who works at or is associated with this company: ${url}
 
-Search for them online and gather whatever you can find:
-- Their current role and responsibilities
-- Professional background and career history
-- Public talks, interviews, podcasts, or blog posts they've done
-- Topics they care about or have spoken about publicly
-- Any recent news or announcements involving them
-- Their LinkedIn headline/summary if it appears in search snippets
-
-If you can't find much, note what you do find and we'll work with it. Do NOT make anything up.` }],
+Find key facts only — their current role, brief professional background, and anything notable they've said or done publicly. Keep it concise. Do NOT make anything up.` }],
       { tools: webSearchTools }
     ),
 
-    // 1b: Company
+    // 1b: Company + market + competitors (single call)
     chat(
-      [{ role: "user", content: `Research this company thoroughly: ${url}
+      [{ role: "user", content: `Research the company at ${url}. In a single concise report, cover:
 
-Visit their website and gather key information: what the company does, their products/services, founding story, leadership team, recent news, funding history, and any unique value propositions. Provide a comprehensive company profile.` }],
-      { tools: webSearchTools }
-    ),
+1. **Company**: What they do, key products/services, recent news, funding
+2. **Market**: Market size, key trends, tailwinds
+3. **Competitors**: Main competitors and how this company differentiates${competitorHint}
 
-    // 1c: Market
-    chat(
-      [{ role: "user", content: `Research the market for the company at ${url}. I need to understand:
-- The overall market size and growth trajectory
-- Key trends shaping this space
-- Major tailwinds and headwinds
-- Who the buyers/customers are and what drives their purchasing decisions
-- Any regulatory or macro factors that matter
-
-Be specific with data points where possible.` }],
-      { tools: webSearchTools }
-    ),
-
-    // 1d: Competitors
-    chat(
-      [{ role: "user", content: `Map out the competitive ecosystem for the company at ${url}. I need:
-- Direct competitors and how they differentiate
-- Indirect competitors or adjacent players
-- The company's defensibility and competitive advantages
-- Where this company is stronger or weaker vs. the field
-- Any recent competitive moves (fundraises, launches, pivots, acquisitions)${competitorHint}` }],
+Be concise — bullet points are fine. Focus on what's useful for writing a personalized outreach email.` }],
       { tools: webSearchTools }
     ),
   ];
 
-  const [recipientRes, companyRes, marketRes, competitorRes] = await Promise.all(researchPromises);
+  const [recipientRes, companyRes] = await Promise.all(researchPromises);
 
   const recipientResearch = extractText(recipientRes);
   const companyResearch = extractText(companyRes);
-  const marketResearch = extractText(marketRes);
-  const competitorResearch = extractText(competitorRes);
 
   // ── Step 2: Write the email ────────────────────────────────────────
   reportProgress(2, "Writing email...");
@@ -199,14 +169,8 @@ Be specific with data points where possible.` }],
 ## Recipient Research
 ${recipientResearch}
 
-## Company Research
+## Company, Market & Competitive Research
 ${companyResearch}
-
-## Market Research
-${marketResearch}
-
-## Competitive Landscape
-${competitorResearch}
 
 ---
 
