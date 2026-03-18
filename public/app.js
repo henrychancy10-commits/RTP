@@ -108,9 +108,13 @@ async function loadTemplates() {
       opt.textContent = t.name;
       templateSelect.appendChild(opt);
     });
-    // Restore saved template selection, or default to first
+    // Restore saved template selection, or default to Clay's longform
+    const DEFAULT_TEMPLATE = "claude-longform-v3";
     if (selectedTemplate && templates.some((t) => t.slug === selectedTemplate)) {
       templateSelect.value = selectedTemplate;
+    } else if (templates.some((t) => t.slug === DEFAULT_TEMPLATE)) {
+      selectedTemplate = DEFAULT_TEMPLATE;
+      templateSelect.value = DEFAULT_TEMPLATE;
     } else if (templates.length > 0) {
       selectedTemplate = templates[0].slug;
     }
