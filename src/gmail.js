@@ -88,14 +88,21 @@ export function isAuthenticated() {
  */
 async function fetchGmailSignature(auth) {
   try {
+    console.log("[Gmail] Fetching signature from sendAs settings...");
     const gmail = google.gmail({ version: "v1", auth });
     const res = await gmail.users.settings.sendAs.list({ userId: "me" });
     const sendAsSettings = res.data.sendAs || [];
     // Find the default (primary) send-as, or the first one with a signature
     const primary = sendAsSettings.find((s) => s.isDefault) || sendAsSettings[0];
-    return primary?.signature || "";
+    const signature = primary?.signature || "";
+    if (signature) {
+      console.log(`[Gmail] Signature found (${signature.length} chars) for: ${primary.sendAsEmail}`);
+    } else {
+      console.log("[Gmail] No signature configured for this account.");
+    }
+    return signature;
   } catch (err) {
-    console.log(`  Could not fetch Gmail signature: ${err.message}`);
+    console.error(`[Gmail] Could not fetch signature: ${err.message}`);
     return "";
   }
 }
