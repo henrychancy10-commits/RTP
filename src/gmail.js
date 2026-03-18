@@ -9,6 +9,7 @@ const TOKEN_PATH = path.join(__dirname, "..", ".gmail-token.json");
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.compose",
   "https://www.googleapis.com/auth/gmail.send",
+  "https://www.googleapis.com/auth/gmail.settings.basic",
 ];
 
 function getRedirectUri() {
