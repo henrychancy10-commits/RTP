@@ -153,17 +153,17 @@ function wrapInEmailHtml(bodyHtml) {
   <style>
     body {
       font-family: Calibri, Arial, sans-serif;
-      font-size: 14px;
+      font-size: 11pt;
       line-height: 1.5;
       color: #333;
       max-width: 680px;
     }
-    p { margin: 0 0 12px 0; }
-    ul, ol { margin: 0 0 12px 0; padding-left: 24px; }
+    p { margin: 0 0 12px 0; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
+    ul, ol { margin: 0 0 12px 0; padding-left: 24px; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
     li { margin-bottom: 4px; }
   </style>
 </head>
-<body>
+<body style="font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #333;">
 ${bodyHtml}
 </body>
 </html>`;

@@ -82,6 +82,24 @@ export function isAuthenticated() {
 }
 
 /**
+ * Fetch the user's default Gmail signature HTML.
+ * Returns the signature HTML string, or "" if unavailable.
+ */
+async function fetchGmailSignature(auth) {
+  try {
+    const gmail = google.gmail({ version: "v1", auth });
+    const res = await gmail.users.settings.sendAs.list({ userId: "me" });
+    const sendAsSettings = res.data.sendAs || [];
+    // Find the default (primary) send-as, or the first one with a signature
+    const primary = sendAsSettings.find((s) => s.isDefault) || sendAsSettings[0];
+    return primary?.signature || "";
+  } catch (err) {
+    console.log(`  Could not fetch Gmail signature: ${err.message}`);
+    return "";
+  }
+}
+
+/**
  * Build a raw RFC 2822 email message.
  */
 function buildRawEmail({ to, subject, htmlBody }) {
@@ -112,8 +130,13 @@ export async function createGmailDraft({ to, subject, htmlBody }) {
   const auth = getAuthenticatedClient();
   if (!auth) throw new Error("Not authenticated with Gmail. Please sign in first.");
 
+  const signature = await fetchGmailSignature(auth);
+  const bodyWithSig = signature
+    ? `${htmlBody}\n<br>\n<div class="gmail_signature">${signature}</div>`
+    : htmlBody;
+
   const gmail = google.gmail({ version: "v1", auth });
-  const raw = buildRawEmail({ to, subject, htmlBody });
+  const raw = buildRawEmail({ to, subject, htmlBody: bodyWithSig });
 
   const res = await gmail.users.drafts.create({
     userId: "me",
@@ -132,8 +155,13 @@ export async function sendGmail({ to, subject, htmlBody }) {
   const auth = getAuthenticatedClient();
   if (!auth) throw new Error("Not authenticated with Gmail. Please sign in first.");
 
+  const signature = await fetchGmailSignature(auth);
+  const bodyWithSig = signature
+    ? `${htmlBody}\n<br>\n<div class="gmail_signature">${signature}</div>`
+    : htmlBody;
+
   const gmail = google.gmail({ version: "v1", auth });
-  const raw = buildRawEmail({ to, subject, htmlBody });
+  const raw = buildRawEmail({ to, subject, htmlBody: bodyWithSig });
 
   await gmail.users.messages.send({
     userId: "me",
@@ -152,15 +180,17 @@ function wrapInEmailHtml(bodyHtml) {
   <style>
     body {
       font-family: Calibri, Arial, sans-serif;
-      font-size: 14px;
+      font-size: 11pt;
       line-height: 1.5;
       color: #333;
       max-width: 680px;
     }
-    p { margin: 0 0 12px 0; }
+    p { margin: 0 0 12px 0; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
+    ul, ol { margin: 0 0 12px 0; padding-left: 24px; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
+    li { margin-bottom: 4px; }
   </style>
 </head>
-<body>
+<body style="font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #333;">
 ${bodyHtml}
 </body>
 </html>`;

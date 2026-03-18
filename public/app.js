@@ -947,7 +947,7 @@ function prepareForOutlook(html) {
   div.querySelectorAll("p").forEach((p) => {
     p.style.margin = "0 0 12px 0";
     p.style.fontFamily = "Calibri, Arial, sans-serif";
-    p.style.fontSize = "14px";
+    p.style.fontSize = "11pt";
     p.style.lineHeight = "1.5";
     p.style.color = "#333";
   });
@@ -965,14 +965,14 @@ function prepareForOutlook(html) {
     el.style.margin = "0 0 12px 0";
     el.style.paddingLeft = "24px";
     el.style.fontFamily = "Calibri, Arial, sans-serif";
-    el.style.fontSize = "14px";
+    el.style.fontSize = "11pt";
     el.style.color = "#333";
   });
   div.querySelectorAll("li").forEach((el) => {
     el.style.marginBottom = "4px";
   });
 
-  return `<html><head><style>p{margin:0 0 12px 0}body{font-family:Calibri,Arial,sans-serif;font-size:14px;line-height:1.5;color:#333}</style></head><body style="font-family:Calibri,Arial,sans-serif;font-size:14px;line-height:1.5;color:#333;">${div.innerHTML}</body></html>`;
+  return `<html><head><style>p{margin:0 0 12px 0}body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.5;color:#333}</style></head><body style="font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.5;color:#333;">${div.innerHTML}</body></html>`;
 }
 
 // Convert HTML to readable plain text (fallback)
