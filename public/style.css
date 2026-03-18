@@ -5,9 +5,9 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
-  background: #fafafa;
-  color: #1a1a1a;
+  font-family: "Georgia", "Times New Roman", "Iowan Old Style", serif;
+  background: #f4f1eb;
+  color: #3c3630;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -39,16 +39,18 @@ header {
 }
 
 h1 {
-  font-size: 22px;
-  font-weight: 600;
-  color: #111;
-  letter-spacing: -0.4px;
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 26px;
+  font-weight: 400;
+  color: #2c2520;
+  letter-spacing: -0.3px;
 }
 
 .subtitle {
-  color: #888;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #8a7f72;
   font-size: 13px;
-  margin-top: 3px;
+  margin-top: 4px;
   font-weight: 400;
 }
 
@@ -57,33 +59,34 @@ h1 {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
   font-weight: 500;
-  color: #666;
+  color: #8a7f72;
 }
 
 .template-selector select {
   padding: 7px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid #ddd6cb;
+  border-radius: 6px;
   font-size: 13px;
-  font-family: inherit;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 500;
-  background: #fff;
-  color: #1a1a1a;
+  background: #faf8f4;
+  color: #3c3630;
   cursor: pointer;
   min-width: 200px;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .template-selector select:hover {
-  border-color: #ccc;
+  border-color: #c5bdb0;
 }
 
 .template-selector select:focus {
   outline: none;
-  border-color: #999;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
+  border-color: #a09788;
+  box-shadow: 0 0 0 3px rgba(74, 92, 42, 0.08);
 }
 
 /* ---- Toolbar ---- */
@@ -95,10 +98,9 @@ h1 {
   gap: 10px;
   margin-bottom: 16px;
   padding: 10px 14px;
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  background: #faf8f4;
+  border: 1px solid #e6e0d6;
+  border-radius: 8px;
 }
 
 .toolbar-left, .toolbar-right {
@@ -109,8 +111,9 @@ h1 {
 }
 
 .progress-text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
-  color: #888;
+  color: #8a7f72;
   font-weight: 500;
 }
 
@@ -125,12 +128,12 @@ h1 {
   justify-content: center;
   padding: 7px 14px;
   border: none;
-  border-radius: 7px;
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: inherit;
   white-space: nowrap;
 }
 
@@ -142,63 +145,63 @@ h1 {
 .btn-small {
   padding: 5px 11px;
   font-size: 12px;
-  border-radius: 6px;
+  border-radius: 5px;
 }
 
 .btn-primary {
-  background: #111;
-  color: #fff;
+  background: #4a5c2a;
+  color: #f4f1eb;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #333;
+  background: #3d4e22;
 }
 
 .btn-secondary {
-  background: #f0f0f0;
-  color: #333;
+  background: #e8e2d8;
+  color: #4a4239;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #e4e4e4;
+  background: #ddd6cb;
 }
 
 .btn-danger {
-  background: #e5484d;
-  color: #fff;
+  background: #a63d2f;
+  color: #f4f1eb;
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #d93036;
+  background: #8f3427;
 }
 
 .btn-outline {
   background: transparent;
-  color: #666;
-  border: 1px solid #ddd;
+  color: #7a6f62;
+  border: 1px solid #d6cfc4;
 }
 
 .btn-outline:hover:not(:disabled) {
-  color: #333;
-  border-color: #bbb;
-  background: rgba(0, 0, 0, 0.02);
+  color: #4a4239;
+  border-color: #bfb7aa;
+  background: rgba(74, 92, 42, 0.04);
 }
 
 .btn-connect {
-  background: #111;
-  color: #fff;
+  background: #4a5c2a;
+  color: #f4f1eb;
   text-decoration: none;
 }
 
 .btn-connect:hover {
-  background: #333;
+  background: #3d4e22;
 }
 
 .btn-icon {
   padding: 4px 8px;
   background: none;
   border: none;
-  color: #aaa;
+  color: #b0a898;
   cursor: pointer;
   font-size: 16px;
   border-radius: 5px;
@@ -206,12 +209,13 @@ h1 {
 }
 
 .btn-icon:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: #e5484d;
+  background: rgba(166, 61, 47, 0.06);
+  color: #a63d2f;
 }
 
 .btn-icon.regen-row:hover {
-  color: #111;
+  background: rgba(74, 92, 42, 0.06);
+  color: #4a5c2a;
 }
 
 .col-actions {
@@ -220,16 +224,16 @@ h1 {
 
 /* ---- Table ---- */
 .table-wrapper {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
+  background: #faf8f4;
+  border: 1px solid #e6e0d6;
+  border-radius: 8px;
   overflow-x: auto;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
 }
 
@@ -240,26 +244,26 @@ thead {
 }
 
 th {
-  background: #f7f7f7;
+  background: #f0ece4;
   padding: 9px 8px;
   text-align: left;
   font-size: 11px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: #888;
-  border-bottom: 1px solid #e8e8e8;
+  color: #8a7f72;
+  border-bottom: 1px solid #e6e0d6;
   white-space: nowrap;
 }
 
 td {
   padding: 4px 4px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #ece7de;
   vertical-align: top;
 }
 
 tr:hover td {
-  background: #f9f9fb;
+  background: rgba(74, 92, 42, 0.03);
 }
 
 /* Column widths */
@@ -286,27 +290,27 @@ td input[type="email"] {
   width: 100%;
   padding: 6px 8px;
   border: 1px solid transparent;
-  border-radius: 5px;
+  border-radius: 4px;
   font-size: 13px;
-  font-family: inherit;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: transparent;
-  color: #1a1a1a;
+  color: #3c3630;
   transition: all 0.12s ease;
 }
 
 td input:hover {
-  border-color: #ddd;
+  border-color: #ddd6cb;
 }
 
 td input:focus {
   outline: none;
-  border-color: #bbb;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
+  border-color: #b5ad9f;
+  background: #faf8f4;
+  box-shadow: 0 0 0 3px rgba(74, 92, 42, 0.06);
 }
 
 td input::placeholder {
-  color: #ccc;
+  color: #c5bdb0;
 }
 
 /* ---- Status badges ---- */
@@ -314,18 +318,19 @@ td input::placeholder {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 11px;
   font-weight: 500;
 }
 
 .status-pending {
-  background: #f3f3f3;
-  color: #999;
+  background: #ece7de;
+  color: #a09788;
 }
 
 .status-generating {
-  background: rgba(59, 130, 246, 0.08);
-  color: #3b82f6;
+  background: rgba(74, 92, 42, 0.1);
+  color: #4a5c2a;
   animation: pulse-badge 2s ease-in-out infinite;
 }
 
@@ -335,85 +340,87 @@ td input::placeholder {
 }
 
 .status-generated {
-  background: rgba(22, 163, 74, 0.08);
-  color: #16a34a;
+  background: rgba(74, 92, 42, 0.1);
+  color: #4a5c2a;
 }
 
 .status-drafting {
-  background: rgba(202, 138, 4, 0.08);
-  color: #ca8a04;
+  background: rgba(160, 120, 40, 0.1);
+  color: #8a6e1e;
 }
 
 .status-drafted {
-  background: rgba(22, 163, 74, 0.08);
-  color: #16a34a;
+  background: rgba(74, 92, 42, 0.1);
+  color: #4a5c2a;
 }
 
 .status-sending {
-  background: rgba(202, 138, 4, 0.08);
-  color: #ca8a04;
+  background: rgba(160, 120, 40, 0.1);
+  color: #8a6e1e;
 }
 
 .status-sent {
-  background: rgba(22, 163, 74, 0.08);
-  color: #16a34a;
+  background: rgba(74, 92, 42, 0.1);
+  color: #4a5c2a;
 }
 
 .status-error {
-  background: rgba(220, 38, 38, 0.08);
-  color: #dc2626;
+  background: rgba(166, 61, 47, 0.08);
+  color: #a63d2f;
 }
 
 /* Copy button */
 .btn-copy {
-  background: #f5f5f5;
-  color: #666;
-  border: 1px solid #e0e0e0;
+  background: #ece7de;
+  color: #7a6f62;
+  border: 1px solid #ddd6cb;
 }
 
 .btn-copy:hover:not(:disabled) {
-  border-color: #ccc;
-  color: #333;
+  border-color: #c5bdb0;
+  color: #4a4239;
 }
 
 .btn-copied {
-  background: rgba(22, 163, 74, 0.08) !important;
-  color: #16a34a !important;
-  border-color: rgba(22, 163, 74, 0.2) !important;
+  background: rgba(74, 92, 42, 0.1) !important;
+  color: #4a5c2a !important;
+  border-color: rgba(74, 92, 42, 0.25) !important;
 }
 
 /* Outlook button */
 .btn-outlook {
-  background: #f5f5f5;
-  color: #666;
-  border: 1px solid #e0e0e0;
+  background: #ece7de;
+  color: #7a6f62;
+  border: 1px solid #ddd6cb;
 }
 
 .btn-outlook:hover:not(:disabled) {
-  border-color: #ccc;
-  color: #333;
+  border-color: #c5bdb0;
+  color: #4a4239;
 }
 
 /* Timer & Cost cells */
 .timer-cell, .cost-cell {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 12px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: #888;
+  color: #a09788;
   white-space: nowrap;
 }
 
 .timer-cell.active {
-  color: #3b82f6;
+  color: #4a5c2a;
 }
 
 .cost-cell .cost-value {
-  color: #1a1a1a;
+  color: #3c3630;
 }
 
 /* Preview button */
 .preview-link {
-  color: #888;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #8a7f72;
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
@@ -422,7 +429,7 @@ td input::placeholder {
 }
 
 .preview-link:hover {
-  color: #111;
+  color: #3c3630;
   text-decoration: underline;
 }
 
@@ -433,7 +440,7 @@ td input::placeholder {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(44, 37, 32, 0.2);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   z-index: 1000;
@@ -443,14 +450,14 @@ td input::placeholder {
 }
 
 .modal-content {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
+  background: #faf8f4;
+  border: 1px solid #e6e0d6;
+  border-radius: 10px;
   width: 90%;
   max-width: 700px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 24px 80px rgba(44, 37, 32, 0.12), 0 0 0 1px rgba(44, 37, 32, 0.04);
 }
 
 .modal-header {
@@ -461,9 +468,10 @@ td input::placeholder {
 }
 
 .modal-header h2 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111;
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #2c2520;
   text-transform: none;
   letter-spacing: -0.2px;
 }
@@ -472,7 +480,7 @@ td input::placeholder {
   display: flex;
   gap: 8px;
   padding: 16px 24px 20px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #ece7de;
 }
 
 .email-preview {
@@ -480,7 +488,7 @@ td input::placeholder {
   font-family: Calibri, Arial, sans-serif;
   font-size: 11pt;
   line-height: 1.5;
-  color: #333;
+  color: #3c3630;
 }
 
 .email-preview p {
@@ -491,28 +499,29 @@ td input::placeholder {
 .status-message {
   margin-top: 16px;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
   font-weight: 500;
   border: 1px solid;
 }
 
 .status-message.status-success {
-  background: rgba(22, 163, 74, 0.05);
-  color: #16a34a;
-  border-color: rgba(22, 163, 74, 0.15);
+  background: rgba(74, 92, 42, 0.06);
+  color: #4a5c2a;
+  border-color: rgba(74, 92, 42, 0.15);
 }
 
 .status-message.status-error {
-  background: rgba(220, 38, 38, 0.05);
-  color: #dc2626;
-  border-color: rgba(220, 38, 38, 0.15);
+  background: rgba(166, 61, 47, 0.06);
+  color: #a63d2f;
+  border-color: rgba(166, 61, 47, 0.15);
 }
 
 .status-message.status-info {
-  background: rgba(59, 130, 246, 0.05);
-  color: #3b82f6;
-  border-color: rgba(59, 130, 246, 0.15);
+  background: rgba(138, 110, 30, 0.06);
+  color: #8a6e1e;
+  border-color: rgba(138, 110, 30, 0.15);
 }
 
 /* ---- Checkbox ---- */
@@ -521,14 +530,14 @@ th input[type="checkbox"] {
   width: 15px;
   height: 15px;
   cursor: pointer;
-  accent-color: #111;
+  accent-color: #4a5c2a;
 }
 
 /* Cell selection (Excel-style drag) */
 td input.cell-selected {
-  background: rgba(59, 130, 246, 0.06) !important;
-  border-color: #3b82f6 !important;
-  box-shadow: inset 0 0 0 1px #3b82f6;
+  background: rgba(74, 92, 42, 0.08) !important;
+  border-color: #4a5c2a !important;
+  box-shadow: inset 0 0 0 1px #4a5c2a;
 }
 
 table.selecting {
@@ -551,12 +560,12 @@ table.selecting td input {
 }
 
 .table-wrapper::-webkit-scrollbar-thumb {
-  background: #ddd;
+  background: #ddd6cb;
   border-radius: 3px;
 }
 
 .table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #ccc;
+  background: #c5bdb0;
 }
 
 /* ---- Responsive ---- */
