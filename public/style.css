@@ -483,12 +483,71 @@ td input::placeholder {
   border-top: 1px solid #ece7de;
 }
 
+/* Editor toolbar */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 24px;
+  border-bottom: 1px solid #ece7de;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #7a6f62;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.toolbar-btn:hover {
+  background: rgba(74, 92, 42, 0.08);
+  color: #3c3630;
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 18px;
+  background: #ddd6cb;
+  margin: 0 4px;
+}
+
+.edit-indicator {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: #8a6e1e;
+  background: rgba(160, 120, 40, 0.1);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .email-preview {
   padding: 20px 24px;
   font-family: Calibri, Arial, sans-serif;
   font-size: 11pt;
   line-height: 1.5;
   color: #3c3630;
+  outline: none;
+  min-height: 200px;
+}
+
+.email-preview:focus {
+  background: #fdfcfa;
 }
 
 .email-preview p {

@@ -26,11 +26,75 @@ const modalDraftBtn = document.getElementById("modalDraftBtn");
 const modalSendBtn = document.getElementById("modalSendBtn");
 const modalCopyBtn = document.getElementById("modalCopyBtn");
 const modalOutlookBtn = document.getElementById("modalOutlookBtn");
+const modalSaveBtn = document.getElementById("modalSaveBtn");
+const editIndicator = document.getElementById("editIndicator");
+const editorToolbar = document.getElementById("editorToolbar");
 const statusMessage = document.getElementById("statusMessage");
 
 // --- Init ---
-addRows(5);
+restoreFromLocalStorage();
+if (rows.length === 0) addRows(5);
 loadTemplates();
+
+// --- Auto-save / persistence ---
+const STORAGE_KEY = "rtp_email_generator_state";
+
+function saveToLocalStorage() {
+  try {
+    syncAllRows();
+    const state = {
+      rows: rows.map((r) => ({
+        url: r.url, name: r.name, to: r.to, subject: r.subject,
+        competitors: r.competitors, portfolio: r.portfolio, context: r.context,
+        status: r.status === "generating" ? "pending" : r.status, // reset in-progress states
+        emailHtml: r.emailHtml, error: r.error,
+        durationMs: r.durationMs, cost: r.cost,
+      })),
+      selectedTemplate,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch { /* localStorage full or unavailable */ }
+}
+
+function restoreFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    if (!state.rows || !state.rows.length) return;
+
+    rows = state.rows.map((r) => createRowData(r));
+    // Restore non-default fields that createRowData doesn't copy
+    state.rows.forEach((saved, i) => {
+      rows[i].status = saved.status || "pending";
+      rows[i].emailHtml = saved.emailHtml || "";
+      rows[i].error = saved.error || "";
+      rows[i].durationMs = saved.durationMs || null;
+      rows[i].cost = saved.cost ?? null;
+    });
+    if (state.selectedTemplate) selectedTemplate = state.selectedTemplate;
+
+    renderTable();
+    const age = Date.now() - (state.savedAt || 0);
+    const ageMin = Math.floor(age / 60000);
+    if (ageMin < 60) {
+      showStatus(`Restored ${rows.length} rows from ${ageMin < 1 ? "just now" : ageMin + "m ago"}.`, "info");
+    } else {
+      showStatus(`Restored ${rows.length} rows from previous session.`, "info");
+    }
+  } catch { /* corrupted data, start fresh */ }
+}
+
+// Auto-save on meaningful changes (debounced)
+let saveTimer = null;
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToLocalStorage, 500);
+}
+
+// Save when user edits table inputs
+tableBody.addEventListener("input", scheduleSave);
 
 // --- Template selector ---
 async function loadTemplates() {
@@ -44,7 +108,10 @@ async function loadTemplates() {
       opt.textContent = t.name;
       templateSelect.appendChild(opt);
     });
-    if (templates.length > 0) {
+    // Restore saved template selection, or default to first
+    if (selectedTemplate && templates.some((t) => t.slug === selectedTemplate)) {
+      templateSelect.value = selectedTemplate;
+    } else if (templates.length > 0) {
       selectedTemplate = templates[0].slug;
     }
   } catch {
@@ -54,6 +121,7 @@ async function loadTemplates() {
 
 templateSelect.addEventListener("change", () => {
   selectedTemplate = templateSelect.value;
+  scheduleSave();
 });
 
 
@@ -131,6 +199,7 @@ function addRows(count, dataArray) {
 function removeRow(id) {
   rows = rows.filter((r) => r.id !== id);
   renderTable();
+  scheduleSave();
 }
 
 function getRowValue(id, field) {
@@ -541,6 +610,7 @@ csvUpload.addEventListener("change", (e) => {
       rows = rows.filter((r) => r.url || r.name || r.to || r.subject);
       addRows(parsed.length, parsed);
       showStatus(`Imported ${parsed.length} rows from CSV.`, "info");
+      scheduleSave();
     }
   };
   reader.readAsText(file);
@@ -690,6 +760,7 @@ async function generateRow(row) {
   }
 
   updateRowStatus(row);
+  scheduleSave();
 }
 
 // --- Regenerate a single row ---
@@ -806,6 +877,7 @@ draftAllBtn.addEventListener("click", async () => {
   draftAllBtn.disabled = false;
   draftAllBtn.textContent = "Draft All";
   showStatus(`${completed} draft(s) created, ${errors} error(s).`, errors ? "error" : "success");
+  scheduleSave();
 });
 
 // --- Send All ---
@@ -854,6 +926,7 @@ sendAllBtn.addEventListener("click", async () => {
   sendAllBtn.disabled = false;
   sendAllBtn.textContent = "Send All";
   showStatus(`${completed} sent, ${errors} error(s).`, errors ? "error" : "success");
+  scheduleSave();
 });
 
 // --- Selection helper ---
@@ -982,7 +1055,9 @@ function htmlToPlainText(html) {
   return div.innerText || div.textContent || "";
 }
 
-// --- Preview modal ---
+// --- Preview modal with inline editing ---
+let originalPreviewHtml = "";
+
 function openPreview(rowId) {
   const row = rows.find((r) => r.id === rowId);
   if (!row || !row.emailHtml) return;
@@ -990,19 +1065,56 @@ function openPreview(rowId) {
   currentPreviewRowId = rowId;
   previewTitle.textContent = `Email to ${row.name} — ${row.subject}`;
   previewBody.innerHTML = row.emailHtml;
+  originalPreviewHtml = row.emailHtml;
+  modalSaveBtn.style.display = "none";
+  editIndicator.style.display = "none";
   previewModal.style.display = "flex";
 }
 
-closeModal.addEventListener("click", () => {
-  previewModal.style.display = "none";
-  currentPreviewRowId = null;
+// Track edits in the contenteditable preview
+previewBody.addEventListener("input", () => {
+  const current = previewBody.innerHTML;
+  const changed = current !== originalPreviewHtml;
+  modalSaveBtn.style.display = changed ? "inline-flex" : "none";
+  editIndicator.style.display = changed ? "inline-block" : "none";
 });
 
-previewModal.addEventListener("click", (e) => {
-  if (e.target === previewModal) {
-    previewModal.style.display = "none";
-    currentPreviewRowId = null;
+// Editor toolbar — execCommand for formatting
+editorToolbar.addEventListener("click", (e) => {
+  const btn = e.target.closest(".toolbar-btn");
+  if (!btn) return;
+  e.preventDefault();
+  const cmd = btn.dataset.cmd;
+  document.execCommand(cmd, false, null);
+  previewBody.focus();
+});
+
+// Save edits back to the row
+modalSaveBtn.addEventListener("click", () => {
+  const row = rows.find((r) => r.id === currentPreviewRowId);
+  if (!row) return;
+  row.emailHtml = previewBody.innerHTML;
+  originalPreviewHtml = row.emailHtml;
+  modalSaveBtn.style.display = "none";
+  editIndicator.style.display = "none";
+  updateRowStatus(row);
+  scheduleSave();
+  showStatus("Email edits saved.", "success");
+});
+
+function closePreviewModal() {
+  // Warn if unsaved edits
+  if (modalSaveBtn.style.display !== "none") {
+    if (!confirm("You have unsaved edits. Discard them?")) return;
   }
+  previewModal.style.display = "none";
+  currentPreviewRowId = null;
+}
+
+closeModal.addEventListener("click", closePreviewModal);
+
+previewModal.addEventListener("click", (e) => {
+  if (e.target === previewModal) closePreviewModal();
 });
 
 modalCopyBtn.addEventListener("click", () => {
