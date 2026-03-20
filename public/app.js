@@ -266,7 +266,7 @@ function renderTable() {
   tableBody.querySelectorAll(".outlook-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       syncAllRows();
-      downloadEml(Number(btn.dataset.id));
+      openInOutlook(Number(btn.dataset.id));
     });
   });
 
@@ -969,7 +969,7 @@ function updateRowStatus(row) {
     outlookTd.innerHTML = `<button class="btn btn-small btn-outlook outlook-btn" data-id="${row.id}">Open</button>`;
     outlookTd.querySelector(".outlook-btn").addEventListener("click", () => {
       syncAllRows();
-      downloadEml(row.id);
+      openInOutlook(row.id);
     });
   }
 
@@ -1189,13 +1189,50 @@ modalSendBtn.addEventListener("click", async () => {
   }
 });
 
-// --- Open in Outlook (.eml) ---
+// --- Open in Outlook ---
 modalOutlookBtn.addEventListener("click", () => {
   const row = rows.find((r) => r.id === currentPreviewRowId);
   if (!row) return;
   syncRowFromDom(row);
-  downloadEml(row.id);
+  openInOutlook(row.id);
 });
+
+async function openInOutlook(rowId) {
+  const row = rows.find((r) => r.id === rowId);
+  if (!row || !row.emailHtml) return;
+
+  const to = row.to || "";
+  const subject = row.subject || "[subject line]";
+
+  showStatus("Creating Outlook draft...", "info");
+
+  try {
+    const res = await fetch("/api/outlook/draft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to, subject, emailHtml: row.emailHtml }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to create draft");
+
+    if (data.webLink) {
+      window.open(data.webLink, "_blank");
+      showStatus("Draft created and opened in Outlook!", "success");
+    } else {
+      // Fallback: draft created but no webLink (open Outlook Web drafts folder)
+      window.open("https://outlook.office.com/mail/drafts", "_blank");
+      showStatus("Draft created! Opened Outlook drafts folder.", "success");
+    }
+
+    row.status = "drafted";
+    renderTable();
+  } catch (err) {
+    // Fallback to .eml download if API fails (e.g. not authenticated)
+    console.warn("Outlook API draft failed, falling back to .eml download:", err.message);
+    downloadEml(rowId);
+  }
+}
 
 function downloadEml(rowId) {
   const row = rows.find((r) => r.id === rowId);
@@ -1205,7 +1242,6 @@ function downloadEml(rowId) {
   const subject = row.subject || "[subject line]";
   const htmlBody = prepareForOutlook(row.emailHtml);
 
-  // Build RFC 2822 .eml with MIME HTML body
   const boundary = "----=_RTPBoundary_" + Date.now();
   const emlParts = [
     `MIME-Version: 1.0`,

@@ -189,7 +189,7 @@ app.post("/api/outlook/draft", async (req, res) => {
       accessToken,
     });
 
-    res.json({ success: true, draftId: draft.id });
+    res.json({ success: true, draftId: draft.id, webLink: draft.webLink });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
