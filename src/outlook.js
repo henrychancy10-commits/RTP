@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TOKEN_CACHE_PATH = path.join(__dirname, "..", ".token-cache.json");
 
-const SCOPES = ["Mail.ReadWrite", "Mail.Send"];
+const SCOPES = ["Mail.ReadWrite", "Mail.Send", "MailboxSettings.Read"];
 
 function getMsalConfig() {
   const clientId = process.env.MICROSOFT_CLIENT_ID;
@@ -79,14 +79,61 @@ export async function getAccessToken() {
 }
 
 /**
+ * Fetch the user's Outlook email signature for new messages.
+ * Tries v1.0 first, falls back to beta endpoint.
+ * Returns the signature HTML string, or "" if unavailable.
+ */
+async function fetchOutlookSignature(accessToken) {
+  const endpoints = [
+    "https://graph.microsoft.com/v1.0/me/mailboxSettings",
+    "https://graph.microsoft.com/beta/me/mailboxSettings",
+  ];
+
+  for (const url of endpoints) {
+    try {
+      console.log(`[Outlook] Fetching signature from ${url}...`);
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!res.ok) {
+        console.log(`[Outlook] ${url} returned ${res.status}, skipping.`);
+        continue;
+      }
+
+      const data = await res.json();
+      const sigSettings = data.signatureSettings;
+
+      if (sigSettings?.newMessageSignature?.content) {
+        const sig = sigSettings.newMessageSignature.content;
+        console.log(`[Outlook] Signature found (${sig.length} chars).`);
+        return sig;
+      }
+
+      console.log(`[Outlook] No signatureSettings in response from ${url}.`);
+    } catch (err) {
+      console.error(`[Outlook] Error fetching signature from ${url}: ${err.message}`);
+    }
+  }
+
+  console.log("[Outlook] No signature available, proceeding without one.");
+  return "";
+}
+
+/**
  * Create a draft email in Outlook via Microsoft Graph API.
  */
 export async function createOutlookDraft({ to, subject, htmlBody, accessToken }) {
+  const signature = await fetchOutlookSignature(accessToken);
+  const bodyWithSig = signature
+    ? `${htmlBody}\n<br>\n<div class="outlook_signature">${signature}</div>`
+    : htmlBody;
+
   const message = {
     subject,
     body: {
       contentType: "HTML",
-      content: wrapInEmailHtml(htmlBody),
+      content: wrapInEmailHtml(bodyWithSig),
     },
     toRecipients: to.split(",").map((addr) => ({
       emailAddress: { address: addr.trim() },
@@ -114,12 +161,17 @@ export async function createOutlookDraft({ to, subject, htmlBody, accessToken })
  * Send an email directly via Microsoft Graph API.
  */
 export async function sendOutlookEmail({ to, subject, htmlBody, accessToken }) {
+  const signature = await fetchOutlookSignature(accessToken);
+  const bodyWithSig = signature
+    ? `${htmlBody}\n<br>\n<div class="outlook_signature">${signature}</div>`
+    : htmlBody;
+
   const payload = {
     message: {
       subject,
       body: {
         contentType: "HTML",
-        content: wrapInEmailHtml(htmlBody),
+        content: wrapInEmailHtml(bodyWithSig),
       },
       toRecipients: to.split(",").map((addr) => ({
         emailAddress: { address: addr.trim() },
