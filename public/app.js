@@ -1244,9 +1244,10 @@ function downloadEml(rowId) {
 
   const boundary = "----=_RTPBoundary_" + Date.now();
   const emlParts = [
-    `MIME-Version: 1.0`,
+    `From: `,
     `To: ${to}`,
     `Subject: ${encodeRFC2047(subject)}`,
+    `MIME-Version: 1.0`,
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
     `X-Unsent: 1`,
     ``,
